@@ -4,18 +4,18 @@ import java.sql.Date
 import javax.inject.{Inject, Singleton}
 
 import actions.client.ClientUserAction
-import db.client.{DASUserDAO, SchemeClaimDAO, SchemeClaimRow, SchemeDAO}
+import db.client.{DASUserDAO, SchemeClaimDAO, SchemeClaimRow}
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
-import play.api.mvc.{Controller, Request, RequestHeader, Result}
+import play.api.mvc.{Controller, RequestHeader, Result}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ClientController @Inject()(ws: WSClient, schemeDAO: SchemeDAO, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
+class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
   def index = UserAction.async { request =>
     schemeClaimDAO.forUser(request.user.id).map { claimedSchemes =>
       Ok(views.html.client.index(request.user, claimedSchemes))
