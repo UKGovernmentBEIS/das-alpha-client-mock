@@ -1,0 +1,24 @@
+@import play.api.data.Form
+@import controllers.client.ClientUserData
+
+@(form: Form[ClientUserData])
+
+@main("Login in to DAS") {
+    <div>
+        <h1>Login to DAS</h1>
+        <form method="post" action="@controllers.client.routes.ClientLoginController.handleLogin()">
+            <div id="errors">
+            @form.errors.map { e => <div>@e.messages.head</div> }
+            </div>
+            <div>
+                <label for="username">User name:</label>
+                <input type="text" id="username" name="username" value="@form.value.getOrElse("")"/>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password"/>
+            </div>
+            <div><input type="submit" value="Login"/> </div>
+        </form>
+    </div>
+}

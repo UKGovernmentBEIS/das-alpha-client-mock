@@ -1,0 +1,15 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Map static resources from the /public folder to the /assets URL path
+GET         /assets/*file                           controllers.Assets.versioned(path="/public", file: Asset)
+
+# Routes for the API
+GET         /client                                 controllers.client.ClientController.index
+GET         /client/logout                          controllers.client.ClientLoginController.logout
+GET         /client/login                           controllers.client.ClientLoginController.showLogin
+POST        /client/login                           controllers.client.ClientLoginController.handleLogin
+
+POST        /client/claimScheme                     controllers.client.ClientController.claimScheme
+GET         /client/claimCallback                   controllers.client.ClientController.claimCallback(code:Option[String])
