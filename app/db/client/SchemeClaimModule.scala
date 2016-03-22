@@ -18,6 +18,8 @@ trait SchemeClaimModule extends DBModule {
 
   def forUser(userId: Long): Future[Seq[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.dasUserId === userId).result)
 
+  def forEmpref(empref: String): Future[Option[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.empref === empref).result.headOption)
+
   def insert(cat: SchemeClaimRow): Future[Unit] = db.run(SchemeClaims += cat).map { _ => () }
 
   class SchemeClaimTable(tag: Tag) extends Table[SchemeClaimRow](tag, "SCHEME_CLAIM") {

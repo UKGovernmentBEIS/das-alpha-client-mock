@@ -1,0 +1,10 @@
+@(declarations:LevyDeclarations)
+
+@main(s"Levy Declarations for ${declarations.empref}") {
+    <h2>Levy Declarations for @declarations.empref</h2>
+    <ul>
+        @declarations.declarations.map { decl =>
+          <li>@decl.payrollMonth.month/@decl.payrollMonth.year -  &pound;@decl.amount</li>
+        }
+    </ul>
+}
