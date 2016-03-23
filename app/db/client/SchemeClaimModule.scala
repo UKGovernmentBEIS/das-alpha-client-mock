@@ -22,17 +22,17 @@ trait SchemeClaimModule extends DBModule {
 
   def insert(cat: SchemeClaimRow): Future[Unit] = db.run(SchemeClaims += cat).map { _ => () }
 
-  class SchemeClaimTable(tag: Tag) extends Table[SchemeClaimRow](tag, "SCHEME_CLAIM") {
+  class SchemeClaimTable(tag: Tag) extends Table[SchemeClaimRow](tag, "scheme_claim") {
 
-    def empref = column[String]("EMPREF", O.PrimaryKey)
+    def empref = column[String]("empref", O.PrimaryKey)
 
-    def dasUserId = column[Long]("DAS_USER_ID")
+    def dasUserId = column[Long]("das_user_id")
 
-    def accessToken = column[String]("ACCESS_TOKEN")
+    def accessToken = column[String]("access_token")
 
-    def validUntil = column[Date]("VALID_UNTIL")
+    def validUntil = column[Date]("valid_until")
 
-    def refreshToken = column[Option[String]]("REFRESH_TOKEN")
+    def refreshToken = column[Option[String]]("refresh_token")
 
 
     def * = (empref, dasUserId, accessToken, validUntil, refreshToken) <>(SchemeClaimRow.tupled, SchemeClaimRow.unapply)

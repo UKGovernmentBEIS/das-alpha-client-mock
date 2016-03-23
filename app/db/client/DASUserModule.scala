@@ -23,13 +23,13 @@ trait DASUserModule extends DBModule {
 
   def byName(s: String): Future[Option[DASUserRow]] = db.run(DASUsers.filter(u => u.name === s).result.headOption)
 
-  class DASUserTable(tag: Tag) extends Table[DASUserRow](tag, "DAS_USER") {
+  class DASUserTable(tag: Tag) extends Table[DASUserRow](tag, "das_user") {
 
-    def id = column[Long]("ID", O.PrimaryKey)
+    def id = column[Long]("id", O.PrimaryKey)
 
-    def name = column[String]("NAME")
+    def name = column[String]("name")
 
-    def password = column[String]("PASSWORD")
+    def password = column[String]("password")
 
     def * = (id, name, password) <>(DASUserRow.tupled, DASUserRow.unapply)
   }
