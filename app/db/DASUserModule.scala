@@ -1,8 +1,7 @@
-package db.client
+package db
 
 import javax.inject.{Inject, Singleton}
 
-import db.DBModule
 import play.api.db.slick.DatabaseConfigProvider
 
 import scala.concurrent.{ExecutionContext, Future}

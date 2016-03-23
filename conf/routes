@@ -3,15 +3,16 @@
 # ~~~~
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file                    controllers.Assets.versioned(path="/public", file: Asset)
+GET         /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
 
 # Routes for the API
-GET         /client                          controllers.client.ClientController.index
-GET         /client/logout                   controllers.client.ClientLoginController.logout
-GET         /client/login                    controllers.client.ClientLoginController.showLogin
-POST        /client/login                    controllers.client.ClientLoginController.handleLogin
+GET         /                         controllers.ClientController.index
+GET         /logout                   controllers.ClientLoginController.logout
+GET         /login                    controllers.ClientLoginController.showLogin
+POST        /login                    controllers.ClientLoginController.handleLogin
 
-GET         /client/levy-declarations        controllers.client.LevyController.showEmpref(empref:String)
+GET         /levy-declarations        controllers.LevyController.showEmpref(empref:String)
 
-POST        /client/claimScheme              controllers.client.ClientController.claimScheme
-GET         /client/claimCallback            controllers.client.ClientController.claimCallback(code:Option[String])
+POST        /claimScheme              controllers.ClientController.claimScheme
+GET         /remove-scheme            controllers.ClientController.removeScheme(empref:String)
+GET         /claimCallback            controllers.ClientController.claimCallback(code:Option[String])

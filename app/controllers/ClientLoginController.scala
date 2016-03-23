@@ -1,9 +1,9 @@
-package controllers.client
+package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import actions.client.ClientUserAction
-import db.client.DASUserDAO
+import actions.ClientUserAction
+import db.DASUserDAO
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.{Action, Controller}
@@ -23,22 +23,22 @@ class ClientLoginController @Inject()(dasUserDAO: DASUserDAO, UserAction: Client
   )
 
   def showLogin = Action {
-    Ok(views.html.client.login(userForm))
+    Ok(views.html.login(userForm))
   }
 
   def handleLogin = Action.async { implicit request =>
     userForm.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.client.login(formWithErrors))),
+      formWithErrors => Future.successful(BadRequest(views.html.login(formWithErrors))),
       userData => {
         dasUserDAO.validate(userData.name, userData.password).map {
-          case Some(user) => Redirect(controllers.client.routes.ClientController.index()).addingToSession(UserAction.sessionKey -> user.id.toString)
-          case None => Ok(views.html.client.login(userForm.withError("username", "Bad user name or password")))
+          case Some(user) => Redirect(controllers.routes.ClientController.index()).addingToSession(UserAction.sessionKey -> user.id.toString)
+          case None => Ok(views.html.login(userForm.withError("username", "Bad user name or password")))
         }
       }
     )
   }
 
   def logout = Action {
-    Redirect(controllers.client.routes.ClientLoginController.showLogin()).withNewSession
+    Redirect(controllers.routes.ClientLoginController.showLogin()).withNewSession
   }
 }

@@ -1,12 +1,11 @@
 @import play.api.data.Form
-@import controllers.client.ClientUserData
 
 @(form: Form[ClientUserData])
 
 @main("Login in to DAS") {
     <div>
         <h1>Login to DAS</h1>
-        <form method="post" action="@controllers.client.routes.ClientLoginController.handleLogin()">
+        <form method="post" action="@controllers.routes.ClientLoginController.handleLogin()">
             <div id="errors">
             @form.errors.map { e => <div>@e.messages.head</div> }
             </div>

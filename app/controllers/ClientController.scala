@@ -1,11 +1,12 @@
-package controllers.client
+package controllers
 
 import java.sql.Date
 import javax.inject.{Inject, Singleton}
 
-import actions.client.ClientUserAction
-import db.client.{DASUserDAO, SchemeClaimDAO, SchemeClaimRow}
+import actions.ClientUserAction
+import db.{DASUserDAO, SchemeClaimDAO, SchemeClaimRow}
 import org.joda.time.DateTime
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.Json
@@ -18,7 +19,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
   def index = UserAction.async { request =>
     schemeClaimDAO.forUser(request.user.id).map { claimedSchemes =>
-      Ok(views.html.client.index(request.user, claimedSchemes))
+      Ok(views.html.index(request.user, claimedSchemes))
     }
   }
 
@@ -29,25 +30,33 @@ class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserActio
 
   def claimScheme = UserAction.async { implicit request =>
     claimMapping.bindFromRequest().fold(
-      formWithErrors => Future.successful(Redirect(controllers.client.routes.ClientController.index())),
+      formWithErrors => Future.successful(Redirect(controllers.routes.ClientController.index())),
       empref => oathDance(empref)
     )
   }
 
-  def oathDance(empref: String)(implicit request:RequestHeader): Future[Result] = {
+  def removeScheme(empref: String) = UserAction.async { implicit request =>
+    Logger.info(s"Trying to remove claim of $empref for user ${request.user.id}")
+    schemeClaimDAO.removeClaimForUser(empref, request.user.id).map { count =>
+      Logger.info(s"removed $count rows")
+      Redirect(controllers.routes.ClientController.index())
+    }
+  }
+
+  def oathDance(empref: String)(implicit request: RequestHeader): Future[Result] = {
     val params = Map(
       "clientId" -> Seq(clientId),
-      "redirectURI" -> Seq(controllers.client.routes.ClientController.claimCallback(None).absoluteURL()),
+      "redirectURI" -> Seq(routes.ClientController.claimCallback(None).absoluteURL()),
       "scope" -> Seq(empref) // TODO: Improve scope handling
     )
     Future.successful(Redirect(authorizeSchemeUri, params))
   }
 
   def claimCallback(code: Option[String]) = UserAction.async { implicit request =>
-    val redirectToIndex = Redirect(controllers.client.routes.ClientController.index())
+    val redirectToIndex = Redirect(controllers.routes.ClientController.index())
 
     code match {
-      case None => Future.successful(Redirect(controllers.client.routes.ClientController.index()))
+      case None => Future.successful(Redirect(controllers.routes.ClientController.index()))
       case Some(c) => convertCode(c, request.user.id).flatMap {
         case Some(scr) => schemeClaimDAO.insert(scr).map { _ => redirectToIndex }
         case None => Future.successful(redirectToIndex)
@@ -55,7 +64,7 @@ class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserActio
     }
   }
 
-  case class AccessTokenResponse(access_token: String, expires_in: Long, scope: String, refreshToken: Option[String], token_type: String)
+  case class AccessTokenResponse(access_token: String, expires_in: Long, scope: String, refresh_token: Option[String], token_type: String)
 
   object AccessTokenResponse {
     implicit val format = Json.format[AccessTokenResponse]
@@ -84,7 +93,7 @@ class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserActio
         case 200 =>
           val r = response.json.validate[AccessTokenResponse].get
           val validUntil = DateTime.now.plus(r.expires_in * 1000)
-          SchemeClaimRow(r.scope, userId, r.access_token, new Date(validUntil.getMillis), r.refreshToken)
+          SchemeClaimRow(r.scope, userId, r.access_token, new Date(validUntil.getMillis), r.refresh_token)
       }
     }
   }

@@ -1,9 +1,8 @@
-package db.client
+package db
 
 import java.sql.Date
 import javax.inject.{Inject, Singleton}
 
-import db.DBModule
 import play.api.db.slick.DatabaseConfigProvider
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,6 +18,12 @@ trait SchemeClaimModule extends DBModule {
   def forUser(userId: Long): Future[Seq[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.dasUserId === userId).result)
 
   def forEmpref(empref: String): Future[Option[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.empref === empref).result.headOption)
+
+  def removeClaimForUser(empref: String, userId: Long): Future[Int] = db.run {
+    SchemeClaims.filter(sc => sc.empref === empref && sc.dasUserId === userId).delete
+  }
+
+  def removeAllClaimsForUser(userId: Long): Future[Int] = db.run(SchemeClaims.filter(_.dasUserId === userId).delete)
 
   def insert(cat: SchemeClaimRow): Future[Unit] = db.run(SchemeClaims += cat).map { _ => () }
 

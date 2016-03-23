@@ -1,11 +1,10 @@
-package controllers.client
+package controllers
 
 import javax.inject.Inject
 
-import db.client.SchemeClaimDAO
+import db.SchemeClaimDAO
 import models.LevyDeclarations
 import play.api.Logger
-import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import play.api.mvc.{Action, Controller}
 import views.html.helper
@@ -26,7 +25,7 @@ class LevyController @Inject()(ws: WSClient, schemeClaims: SchemeClaimDAO)(impli
         ws.url(uri).withHeaders("Authorization" -> s"Bearer ${row.authToken}").get.map { response =>
           Logger.info(response.body)
           val decls = response.json.validate[LevyDeclarations]
-          Ok(views.html.client.declarations(decls.get))
+          Ok(views.html.declarations(decls.get))
         }
 
       case None => Future.successful(NotFound)
