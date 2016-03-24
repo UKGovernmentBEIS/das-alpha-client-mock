@@ -1,33 +1,33 @@
 @import db.{DASUserRow, SchemeClaimRow}
 @(user: DASUserRow, claimedSchemes: Seq[SchemeClaimRow])
 
-    @main("Welcome to DAS") {
-        <h2>Digital Apprenticeship Service</h2>
-        <span>Logged in as @user.name</span>
-        <div>
-            @if(claimedSchemes.isEmpty) {
-                <h3>You have not yet claimed any PAYE Schemes</h3>
-            } else {
-                <h3>Your claimed schemes</h3>
-            }
-            <ul>
-            @claimedSchemes.map { s => <li>
-                <a href="@controllers.routes.LevyController.showEmpref(s.empref)">@s.empref</a> <a href="@controllers.routes.ClientController.removeScheme(s.empref)">
-                remove</a>
-            </li>
-            }
-            </ul>
-        </div>
-        <div>
-            <h3>Claim a scheme</h3>
-            <form action="@controllers.routes.ClientController.claimScheme" method="post">
-                <label for="empref">PAYE Scheme Employer Reference (e.g. 123/AB12345)</label>
-                <input type="text" id="empref" name="empref"/>
-                <input type="submit" value="Claim"/>
-            </form>
-        </div>
+@main("Welcome to DAS") {
+    <h2>Digital Apprenticeship Service</h2>
+    <span>Logged in as @user.name</span>
+    <div>
+        @if(claimedSchemes.isEmpty) {
+            <h3>You have not yet claimed any PAYE Schemes</h3>
+        } else {
+            <h3>Your claimed schemes</h3>
+        }
+        <ul>
+        @claimedSchemes.map { s => <li>
+            <a href="@controllers.routes.LevyController.showEmpref(s.empref)">@s.empref</a> <a href="@controllers.routes.ClientController.removeScheme(s.empref)">
+            remove</a>
+        </li>
+        }
+        </ul>
+    </div>
+    <div>
+        <h3>Claim a scheme</h3>
+        <form action="@controllers.routes.ClientController.claimScheme" method="post">
+            <label for="empref">PAYE Scheme Employer Reference (e.g. 123/AB12345)</label>
+            <input type="text" id="empref" name="empref"/>
+            <input type="submit" value="Claim"/>
+        </form>
+    </div>
 
-        <div>
-            <a href="@controllers.routes.ClientLoginController.logout()">Logout</a>
-        </div>
-    }
+    <div>
+        <a href="@controllers.routes.ClientLoginController.logout()">Logout</a>
+    </div>
+}

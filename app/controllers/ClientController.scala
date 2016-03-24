@@ -18,6 +18,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
   def index = UserAction.async { request =>
+
+    schemeClaimDAO.schema.createStatements.foreach(println)
+
     schemeClaimDAO.forUser(request.user.id).map { claimedSchemes =>
       Ok(views.html.index(request.user, claimedSchemes))
     }
@@ -64,7 +67,7 @@ class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserActio
     }
   }
 
-  case class AccessTokenResponse(access_token: String, expires_in: Long, scope: String, refresh_token: Option[String], token_type: String)
+  case class AccessTokenResponse(access_token: String, expires_in: Long, scope: String, refresh_token: String, token_type: String)
 
   object AccessTokenResponse {
     implicit val format = Json.format[AccessTokenResponse]
@@ -92,8 +95,9 @@ class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserActio
       response.status match {
         case 200 =>
           val r = response.json.validate[AccessTokenResponse].get
-          val validUntil = DateTime.now.plus(r.expires_in * 1000)
-          SchemeClaimRow(r.scope, userId, r.access_token, new Date(validUntil.getMillis), r.refresh_token)
+          Logger.info(Json.prettyPrint(response.json))
+          val validUntil = System.currentTimeMillis() + (r.expires_in * 1000)
+          SchemeClaimRow(r.scope, userId, r.access_token, validUntil, r.refresh_token)
       }
     }
   }

@@ -1,10 +1,31 @@
-@(declarations:LevyDeclarations)
+@(declarations: LevyDeclarations)
 
 @main(s"Levy Declarations for ${declarations.empref}") {
-    <h2>Levy Declarations for @declarations.empref</h2>
-    <ul>
+    <h2>Digital Apprenticeship Service</h2>
+    <h3>Levy Declarations for @declarations.empref</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Declared Levy</th>
+            </tr>
+        </thead>
+        <tbody>
         @declarations.declarations.map { decl =>
-          <li>@decl.payrollMonth.month/@decl.payrollMonth.year -  &pound;@decl.amount</li>
+            <tr>
+                <td align="right">@decl.payrollMonth.month/@decl.payrollMonth.year</td>
+                <td align="right">&pound;@decl.amount</td>
+            </tr>
         }
-    </ul>
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Total</th>
+                <th align="right">&pound;@declarations.declarations.map(_.amount).sum</th>
+            </tr>
+        </tfoot>
+    </table>
+    <div>
+        <a href="@controllers.routes.ClientController.index()">Back</a>
+    </div>
 }

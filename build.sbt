@@ -15,6 +15,8 @@ resolvers += Resolver.bintrayRepo("hmrc", "releases")
 libraryDependencies ++= Seq(
   cache,
   ws,
+  "joda-time" % "joda-time" % "2.7",
+  "org.joda" % "joda-convert" % "1.7",
   "uk.gov.hmrc" %% "domain" % "3.5.0",
   "com.typesafe.play" %% "play-slick" % "2.0.0",
   "com.typesafe.play" %% "play-slick-evolutions" % "2.0.0",

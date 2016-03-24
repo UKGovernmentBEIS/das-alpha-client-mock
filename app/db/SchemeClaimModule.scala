@@ -1,13 +1,15 @@
 package db
 
-import java.sql.Date
 import javax.inject.{Inject, Singleton}
 
+import org.joda.time.DateTime
 import play.api.db.slick.DatabaseConfigProvider
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class SchemeClaimRow(empref: String, userId: Long, authToken: String, validUntil: Date, refreshToken: Option[String])
+case class SchemeClaimRow(empref: String, userId: Long, accessToken: String, validUntil: Long, refreshToken: String) {
+  def isAuthTokenExpired: Boolean = new DateTime(validUntil).isBeforeNow
+}
 
 trait SchemeClaimModule extends DBModule {
 
@@ -35,13 +37,14 @@ trait SchemeClaimModule extends DBModule {
 
     def accessToken = column[String]("access_token")
 
-    def validUntil = column[Date]("valid_until")
+    def validUntil = column[Long]("valid_until")
 
-    def refreshToken = column[Option[String]]("refresh_token")
-
+    def refreshToken = column[String]("refresh_token")
 
     def * = (empref, dasUserId, accessToken, validUntil, refreshToken) <>(SchemeClaimRow.tupled, SchemeClaimRow.unapply)
   }
+
+  def schema = SchemeClaims.schema
 
 }
 
