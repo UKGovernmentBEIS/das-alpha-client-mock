@@ -7067,7 +7067,7 @@ a.back-to-top-link:visited, .back-to-top-link.link-style:visited,
     padding: 3px 0 2px 0;
     text-decoration: none;
     padding: 3px 0 2px 30px;
-    background-image: url("../images/icons/crests/hmrc_crest_13px.png");
+    background-image: url("../images/icons/crests/bis_crest_13px.png");
     background-position: 5px center;
     background-repeat: no-repeat;
     border-left: 2px solid #009390
@@ -7096,7 +7096,7 @@ a.organisation-logo:focus, .organisation-logo.link-style:focus,
 
 .organisation-logo-stacked {
     padding: 20px 0 0 6px;
-    background-image: url("../images/icons/crests/hmrc_crest_13px.png");
+    background-image: url("../images/icons/crests/bis_crest_13px.png");
     background-position: 5px top
 }
 
@@ -7108,7 +7108,7 @@ a.organisation-logo:focus, .organisation-logo.link-style:focus,
 
 @media all and (-webkit-min-device-pixel-ratio: 2) {
     .organisation-logo, .organisation-logo-stacked, .organisation-logo-stacked {
-        background-image: url("../images/icons/crests/hmrc_crest_13px_x2.png");
+        background-image: url("../images/icons/crests/bis_crest_13px_x2.png");
         background-size: auto 20px
     }
 }
@@ -7118,7 +7118,7 @@ a.organisation-logo:focus, .organisation-logo.link-style:focus,
         font-size: 18px;
         line-height: 22px;
         padding: 3px 0 2px 38px;
-        background-image: url("../images/icons/crests/hmrc_crest_18px.png");
+        background-image: url("../images/icons/crests/bis_crest_18px.png");
         background-position: 6px center;
         border-left: 2px solid #009390;
         white-space: nowrap
@@ -7128,7 +7128,7 @@ a.organisation-logo:focus, .organisation-logo.link-style:focus,
 @media (min-width: 641px) {
     .organisation-logo-stacked-medium {
         padding: 25px 0 0 7px;
-        background-image: url("../images/icons/crests/hmrc_crest_18px.png");
+        background-image: url("../images/icons/crests/bis_crest_18px.png");
         background-position: 6px top
     }
 }
@@ -7144,7 +7144,7 @@ a.organisation-logo:focus, .organisation-logo.link-style:focus,
 @media all and (min-width: 641px) and (-webkit-min-device-pixel-ratio: 2) {
     .organisation-logo-medium, .organisation-logo-stacked-medium,
     .organisation-logo-stacked-medium {
-        background-image: url("../images/icons/crests/hmrc_crest_18px_x2.png");
+        background-image: url("../images/icons/crests/bis_crest_18px_x2.png");
         background-size: auto 26px
     }
 }

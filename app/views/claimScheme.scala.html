@@ -1,7 +1,22 @@
 @import db.{DASUserRow, SchemeClaimRow}
 @(form: Form[_], user: DASUserRow, claimedSchemes: Seq[SchemeClaimRow])
 
-@main("Welcome to DAS") {
+@proposition = {
+    <div class="header-proposition">
+        <div class="content">
+            <nav id="proposition-menu" class="header__menu" role="navigation">
+                <span class="header__menu__proposition-name">Digital Apprenticehip Service</span>
+
+                <ul id="proposition-links" class="header__menu__proposition-links">
+                    <li><a id="logOutNavHref" href="@controllers.routes.ClientSignInController.signOut()" data-journey-click="primary-navigation:Click:Sign out">
+                        Sign out</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+}
+
+@main("Welcome to DAS", insideHeader = proposition) {
     <h2>Digital Apprenticeship Service</h2>
     <span>Logged in as @user.name</span>
     <div>
@@ -40,7 +55,4 @@
         </form>
     </div>
 
-    <div>
-        <a href="@controllers.routes.ClientLoginController.logout()">Logout</a>
-    </div>
 }

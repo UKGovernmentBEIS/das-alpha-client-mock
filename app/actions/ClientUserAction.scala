@@ -18,7 +18,7 @@ class ClientUserAction @Inject()(dasUsers: DASUserDAO)(implicit ec: ExecutionCon
 
   override protected def refine[A](request: Request[A]): Future[Either[Result, ClientUserRequest[A]]] = {
 
-    val login = Left(Redirect(controllers.routes.ClientLoginController.showLogin()))
+    val login = Left(Redirect(controllers.routes.ClientSignInController.showSignIn()))
     request.session.get(sessionKey) match {
       case None => Future.successful(login)
       case Some(ParseLong(id)) => dasUsers.byId(id).map {

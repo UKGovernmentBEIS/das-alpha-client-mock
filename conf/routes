@@ -7,9 +7,9 @@ GET         /assets/*file             controllers.Assets.at(path="/public", file
 
 # Routes for the API
 GET         /                         controllers.ClientController.index
-GET         /logout                   controllers.ClientLoginController.logout
-GET         /login                    controllers.ClientLoginController.showLogin
-POST        /login                    controllers.ClientLoginController.handleLogin
+GET         /sign-out                 controllers.ClientSignInController.signOut
+GET         /sign-in                  controllers.ClientSignInController.showSignIn
+POST        /sign-in                  controllers.ClientSignInController.handleSignIn
 
 GET         /levy-declarations        controllers.LevyController.showEmpref(empref:String)
 
