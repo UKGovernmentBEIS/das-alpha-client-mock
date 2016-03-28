@@ -3,7 +3,7 @@
 # ~~~~
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
+GET         /assets/*file             controllers.Assets.at(path="/public", file)
 
 # Routes for the API
 GET         /                         controllers.ClientController.index
@@ -13,6 +13,7 @@ POST        /login                    controllers.ClientLoginController.handleLo
 
 GET         /levy-declarations        controllers.LevyController.showEmpref(empref:String)
 
-POST        /claimScheme              controllers.ClientController.claimScheme
+GET         /claim-scheme             controllers.ClientController.showClaimScheme
+POST        /claim-scheme             controllers.ClientController.claimScheme
 GET         /remove-scheme            controllers.ClientController.removeScheme(empref:String)
-GET         /claimCallback            controllers.ClientController.claimCallback(code:Option[String])
+GET         /claim-callback           controllers.ClientController.claimCallback(code:Option[String])

@@ -1,0 +1,46 @@
+@import db.{DASUserRow, SchemeClaimRow}
+@(form: Form[_], user: DASUserRow, claimedSchemes: Seq[SchemeClaimRow])
+
+@main("Welcome to DAS") {
+    <h2>Digital Apprenticeship Service</h2>
+    <span>Logged in as @user.name</span>
+    <div>
+        @if(claimedSchemes.isEmpty) {
+            <h3>You have not yet claimed any PAYE Schemes</h3>
+        } else {
+            <h3>Your claimed schemes</h3>
+        }
+        <ul>
+        @claimedSchemes.map { s => <li>
+            <a href="@controllers.routes.LevyController.showEmpref(s.empref)">@s.empref</a> <a href="@controllers.routes.ClientController.removeScheme(s.empref)">
+            remove</a>
+        </li>
+        }
+        </ul>
+    </div>
+    <div>
+        <h3>Claim a scheme</h3>
+        <form action="@controllers.routes.ClientController.claimScheme" method="post">
+            <fieldset class="form-field-group">
+                @if(form.errors("empref").nonEmpty) {
+                <div class="form-field form-field--error fields-aligned">
+                @form.errors("empref").map { e => <span class="error-notification">@e.message</span> }
+                <label class="label--full-length" for="empref">PAYE Scheme Employer Reference (e.g. 123/AB12345)</label>
+                <input type="text" id="empref" name="empref"/>
+                <input class="button" type="submit" value="Claim"/>
+            </div>
+                } else {
+                <div class="form-field fields-aligned">
+                    <label class="label--full-length" for="empref">PAYE Scheme Employer Reference (e.g. 123/AB12345)</label>
+                    <input type="text" id="empref" name="empref"/>
+                    <input class="button" type="submit" value="Claim"/>
+                </div>
+                }
+            </fieldset>
+        </form>
+    </div>
+
+    <div>
+        <a href="@controllers.routes.ClientLoginController.logout()">Logout</a>
+    </div>
+}

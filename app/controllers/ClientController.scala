@@ -1,41 +1,53 @@
 package controllers
 
-import java.sql.Date
 import javax.inject.{Inject, Singleton}
 
-import actions.ClientUserAction
+import actions.{ClientUserAction, ClientUserRequest}
 import db.{DASUserDAO, SchemeClaimDAO, SchemeClaimRow}
-import org.joda.time.DateTime
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.data.validation._
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
-import play.api.mvc.{Controller, RequestHeader, Result}
+import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
-  def index = UserAction.async { request =>
 
-    schemeClaimDAO.schema.createStatements.foreach(println)
-
-    schemeClaimDAO.forUser(request.user.id).map { claimedSchemes =>
-      Ok(views.html.index(request.user, claimedSchemes))
-    }
+  def unclaimed(claimed: Seq[SchemeClaimRow]): Constraint[String] = Constraint[String]("already claimed") { empref =>
+    if (claimed.map(_.empref.trim()).contains(empref.trim())) Invalid(ValidationError(s"you have already claimed scheme $empref"))
+    else Valid
   }
 
-  val claimMapping = Form("empref" -> text)
+  def claimMapping(claimedSchemes: Seq[SchemeClaimRow]) = Form("empref" -> text.verifying(unclaimed(claimedSchemes)))
+
+  def index = Action {
+    Redirect(controllers.routes.ClientController.showClaimScheme())
+  }
+
+  def showClaimScheme = UserAction.async { request =>
+    showClaimPage(request)
+  }
+
+  def showClaimPage(request: ClientUserRequest[AnyContent]): Future[Result] = {
+    schemeClaimDAO.forUser(request.user.id).map { claimedSchemes =>
+      Ok(views.html.claimScheme(claimMapping(claimedSchemes), request.user, claimedSchemes))
+    }
+  }
 
   // TODO: Read from config
   val authorizeSchemeUri = "http://localhost:9002/oauth/authorize"
 
   def claimScheme = UserAction.async { implicit request =>
-    claimMapping.bindFromRequest().fold(
-      formWithErrors => Future.successful(Redirect(controllers.routes.ClientController.index())),
-      empref => oathDance(empref)
-    )
+    schemeClaimDAO.forUser(request.user.id).flatMap { claimedSchemes =>
+      claimMapping(claimedSchemes).bindFromRequest().fold(
+        formWithErrors => Future.successful(Ok(views.html.claimScheme(formWithErrors, request.user, claimedSchemes))),
+        empref => oathDance(empref)
+      )
+    }
   }
 
   def removeScheme(empref: String) = UserAction.async { implicit request =>
