@@ -23,16 +23,16 @@ class ClientSignInController @Inject()(dasUserDAO: DASUserDAO, UserAction: Clien
   )
 
   def showSignIn = Action {
-    Ok(views.html.login(signInForm))
+    Ok(views.html.signin(signInForm))
   }
 
   def handleSignIn = Action.async { implicit request =>
     signInForm.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.login(formWithErrors))),
+      formWithErrors => Future.successful(BadRequest(views.html.signin(formWithErrors))),
       userData => {
         dasUserDAO.validate(userData.name, userData.password).map {
           case Some(user) => Redirect(controllers.routes.ClientController.index()).addingToSession(UserAction.sessionKey -> user.id.toString)
-          case None => Ok(views.html.login(signInForm.withError("username", "Bad user name or password")))
+          case None => Ok(views.html.signin(signInForm.withError("username", "Bad user name or password")))
         }
       }
     )
