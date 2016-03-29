@@ -10,10 +10,10 @@
 @empty = {}
 
 
-@layouts.govuk_template2(Some(title), None)(head, empty, bodyEnd, insideHeader, empty, empty) {
+@layouts.govuk_template2(Some(title), None)(head, empty, bodyEnd, insideHeader, empty, empty, empty, empty, empty) {
     <main id="content" class="@mainClass" role="main">
         <div class="service-info ">
-
+            @alphaBanner()
             <div class="logo">
                 <span class="organisation-logo organisation-logo-stacked-medium organisation-logo-stacked-single-identity-large">Skills Funding<br>Agency</span>
             </div>
