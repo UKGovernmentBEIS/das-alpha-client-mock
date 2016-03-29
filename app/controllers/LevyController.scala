@@ -12,14 +12,14 @@ import views.html.helper
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class LevyController @Inject()(ws: WSClient, schemeClaims: SchemeClaimDAO)(implicit ec: ExecutionContext) extends Controller {
+class LevyController @Inject()(config: ServiceConfig, ws: WSClient, schemeClaims: SchemeClaimDAO)(implicit ec: ExecutionContext) extends Controller {
 
-  val apiUriBase = "https://das-alpha-hmrc-api-mock.herokuapp.com/epaye"
+  import config._
 
   def showEmpref(empref: String) = Action.async { implicit request =>
     schemeClaims.forEmpref(empref).flatMap {
       case Some(row) =>
-        val uri = apiUriBase + s"/${helper.urlEncode(empref)}/levy-declarations"
+        val uri = apiBaseURI + s"/${helper.urlEncode(empref)}/levy-declarations"
         withFreshAccessToken(row).flatMap { authToken =>
           Logger.info(s"calling $uri")
           ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken").get.map { response =>
@@ -49,11 +49,6 @@ class LevyController @Inject()(ws: WSClient, schemeClaims: SchemeClaimDAO)(impli
       Future.successful(row.accessToken)
     }
   }
-
-  // TODO: Read from config or db
-  val clientId = "client1"
-  val clientSecret = "secret1"
-  val accessTokenUri = "https://das-alpha-taxservice-mock.herokuapp.com/oauth/token"
 
   case class RefreshTokenResponse(access_token: String, expires_in: Long)
 

@@ -15,7 +15,9 @@ import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
+class ClientController @Inject()(config:ServiceConfig, ws: WSClient, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
+
+  import config._
 
   def unclaimed(claimed: Seq[SchemeClaimRow]): Constraint[String] = Constraint[String]("already claimed") { empref =>
     if (claimed.map(_.empref.trim()).contains(empref.trim())) Invalid(ValidationError(s"you have already claimed scheme $empref"))
@@ -37,9 +39,6 @@ class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserActio
       Ok(views.html.claimScheme(claimMapping(claimedSchemes), request.user, claimedSchemes))
     }
   }
-
-  // TODO: Read from config
-  val authorizeSchemeUri = "https://das-alpha-taxservice-mock.herokuapp.com/oauth/authorize"
 
   def claimScheme = UserAction.async { implicit request =>
     schemeClaimDAO.forUser(request.user.id).flatMap { claimedSchemes =>
@@ -89,10 +88,6 @@ class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserActio
     callAuthServer(userId, code).map(Some(_))
   }
 
-  // TODO: Read from config or db
-  val clientId = "client1"
-  val clientSecret = "secret1"
-  val accessTokenUri = "https://das-alpha-taxservice-mock.herokuapp.com/oauth/token"
 
   def callAuthServer(userId: Long, authCode: String)(implicit rh: RequestHeader): Future[SchemeClaimRow] = {
     val params = Map(
