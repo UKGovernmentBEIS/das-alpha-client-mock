@@ -39,7 +39,7 @@ class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserActio
   }
 
   // TODO: Read from config
-  val authorizeSchemeUri = "http://localhost:9002/oauth/authorize"
+  val authorizeSchemeUri = "https://das-alpha-taxservice-mock.herokuapp.com/oauth/authorize"
 
   def claimScheme = UserAction.async { implicit request =>
     schemeClaimDAO.forUser(request.user.id).flatMap { claimedSchemes =>
@@ -92,7 +92,7 @@ class ClientController @Inject()(ws: WSClient, dasUserDAO: DASUserDAO, UserActio
   // TODO: Read from config or db
   val clientId = "client1"
   val clientSecret = "secret1"
-  val accessTokenUri = "http://localhost:9002/oauth/token"
+  val accessTokenUri = "https://das-alpha-taxservice-mock.herokuapp.com/oauth/token"
 
   def callAuthServer(userId: Long, authCode: String)(implicit rh: RequestHeader): Future[SchemeClaimRow] = {
     val params = Map(

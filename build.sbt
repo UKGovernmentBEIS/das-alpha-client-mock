@@ -8,7 +8,7 @@ routesImport += "uk.gov.hmrc.domain._, models.PlayBindings._"
 
 scalaVersion := "2.11.8"
 
-PlayKeys.playDefaultPort := 9000
+PlayKeys.devSettings := Seq("play.server.http.port" -> "9000")
 
 resolvers += Resolver.bintrayRepo("hmrc", "releases")
 

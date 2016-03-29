@@ -14,13 +14,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class LevyController @Inject()(ws: WSClient, schemeClaims: SchemeClaimDAO)(implicit ec: ExecutionContext) extends Controller {
 
-  val apiUriBase = "http://localhost:9001/epaye"
+  val apiUriBase = "https://das-alpha-hmrc-api-mock.herokuapp.com/epaye"
 
   def showEmpref(empref: String) = Action.async { implicit request =>
     schemeClaims.forEmpref(empref).flatMap {
       case Some(row) =>
         val uri = apiUriBase + s"/${helper.urlEncode(empref)}/levy-declarations"
-        withFreshAuthToken(row).flatMap { authToken =>
+        withFreshAccessToken(row).flatMap { authToken =>
           Logger.info(s"calling $uri")
           ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken").get.map { response =>
             response.status match {
@@ -41,10 +41,10 @@ class LevyController @Inject()(ws: WSClient, schemeClaims: SchemeClaimDAO)(impli
     }
   }
 
-  def withFreshAuthToken(row: SchemeClaimRow)(implicit requestHeader: RequestHeader): Future[String] = {
+  def withFreshAccessToken(row: SchemeClaimRow)(implicit requestHeader: RequestHeader): Future[String] = {
     if (row.isAuthTokenExpired) {
       Logger.info(s"access token has expired - refreshing")
-      callAuthServer(row).map(_.accessToken)
+      refreshAccessToken(row).map(_.accessToken)
     } else {
       Future.successful(row.accessToken)
     }
@@ -53,7 +53,7 @@ class LevyController @Inject()(ws: WSClient, schemeClaims: SchemeClaimDAO)(impli
   // TODO: Read from config or db
   val clientId = "client1"
   val clientSecret = "secret1"
-  val accessTokenUri = "http://localhost:9002/oauth/token"
+  val accessTokenUri = "https://das-alpha-taxservice-mock.herokuapp.com/oauth/token"
 
   case class RefreshTokenResponse(access_token: String, expires_in: Long)
 
@@ -61,7 +61,7 @@ class LevyController @Inject()(ws: WSClient, schemeClaims: SchemeClaimDAO)(impli
     implicit val format = Json.format[RefreshTokenResponse]
   }
 
-  def callAuthServer(row: SchemeClaimRow)(implicit rh: RequestHeader): Future[SchemeClaimRow] = {
+  def refreshAccessToken(row: SchemeClaimRow)(implicit rh: RequestHeader): Future[SchemeClaimRow] = {
     val params = Map(
       "grant_type" -> "refresh_token",
       "refresh_token" -> row.refreshToken,
