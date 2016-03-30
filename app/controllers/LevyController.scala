@@ -64,13 +64,14 @@ class LevyController @Inject()(config: ServiceConfig, ws: WSClient, schemeClaims
       "client_secret" -> clientSecret
     ).map { case (k, v) => k -> Seq(v) }
 
-    ws.url(accessTokenUri).post(params).map { response =>
+    ws.url(accessTokenUri).post(params).flatMap { response =>
       response.status match {
         case 200 =>
           val r = response.json.validate[RefreshTokenResponse].get
           Logger.info(Json.prettyPrint(response.json))
           val validUntil = System.currentTimeMillis() + (r.expires_in * 1000)
-          row.copy(accessToken = r.access_token, validUntil = validUntil)
+          val updatedRow = row.copy(accessToken = r.access_token, validUntil = validUntil)
+          schemeClaims.updateClaim(updatedRow).map(_ => row)
 
         case 401 =>
           Logger.error(response.body)

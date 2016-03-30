@@ -17,18 +17,6 @@ trait SchemeClaimModule extends DBModule {
 
   val SchemeClaims = TableQuery[SchemeClaimTable]
 
-  def forUser(userId: Long): Future[Seq[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.dasUserId === userId).result)
-
-  def forEmpref(empref: String): Future[Option[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.empref === empref).result.headOption)
-
-  def removeClaimForUser(empref: String, userId: Long): Future[Int] = db.run {
-    SchemeClaims.filter(sc => sc.empref === empref && sc.dasUserId === userId).delete
-  }
-
-  def removeAllClaimsForUser(userId: Long): Future[Int] = db.run(SchemeClaims.filter(_.dasUserId === userId).delete)
-
-  def insert(cat: SchemeClaimRow): Future[Unit] = db.run(SchemeClaims += cat).map { _ => () }
-
   class SchemeClaimTable(tag: Tag) extends Table[SchemeClaimRow](tag, "scheme_claim") {
 
     def empref = column[String]("empref", O.PrimaryKey)
@@ -49,4 +37,23 @@ trait SchemeClaimModule extends DBModule {
 }
 
 @Singleton
-class SchemeClaimDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(implicit val ec: ExecutionContext) extends SchemeClaimModule
+class SchemeClaimDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(implicit val ec: ExecutionContext) extends SchemeClaimModule {
+
+  import driver.api._
+
+  def forUser(userId: Long): Future[Seq[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.dasUserId === userId).result)
+
+  def forEmpref(empref: String): Future[Option[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.empref === empref).result.headOption)
+
+  def updateClaim(row: SchemeClaimRow): Future[Int] = db.run {
+    SchemeClaims.filter(_.empref === row.empref).update(row)
+  }
+
+  def removeClaimForUser(empref: String, userId: Long): Future[Int] = db.run {
+    SchemeClaims.filter(sc => sc.empref === empref && sc.dasUserId === userId).delete
+  }
+
+  def removeAllClaimsForUser(userId: Long): Future[Int] = db.run(SchemeClaims.filter(_.dasUserId === userId).delete)
+
+  def insert(cat: SchemeClaimRow): Future[Unit] = db.run(SchemeClaims += cat).map { _ => () }
+}
