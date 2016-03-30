@@ -6,7 +6,8 @@ CREATE TABLE "das_user" (
   "password" VARCHAR NOT NULL
 );
 
-INSERT INTO "das_user" ("id", "name", "password") VALUES (1, 'doug', 'password');
+INSERT INTO "das_user" ("id", "name", "password") VALUES (1, 'user1', 'password');
+INSERT INTO "das_user" ("id", "name", "password") VALUES (2, 'user2', 'password');
 
 CREATE TABLE "scheme_claim" (
   "empref" VARCHAR NOT NULL UNIQUE,
