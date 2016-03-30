@@ -32,7 +32,7 @@ class LevyController @Inject()(config: ServiceConfig, ws: WSClient, schemeClaims
               case _ =>
                 Logger.error(s"Got status ${response.status}")
                 Logger.error(response.body)
-                throw new Exception(s"Got status ${response.status}")
+                throw new Exception(s"Got status ${response.status} with body '${response.body}'")
             }
           }
         }
