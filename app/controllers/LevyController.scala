@@ -72,6 +72,10 @@ class LevyController @Inject()(config: ServiceConfig, ws: WSClient, schemeClaims
           val validUntil = System.currentTimeMillis() + (r.expires_in * 1000)
           row.copy(accessToken = r.access_token, validUntil = validUntil)
 
+        case 401 =>
+          Logger.error(response.body)
+          throw new Exception(response.body)
+
         case 400 =>
           Logger.error(response.body)
           throw new Exception("bad request")
