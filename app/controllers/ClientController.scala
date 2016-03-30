@@ -15,7 +15,7 @@ import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ClientController @Inject()(config:ServiceConfig, ws: WSClient, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
+class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
 
   import config._
 
@@ -60,14 +60,16 @@ class ClientController @Inject()(config:ServiceConfig, ws: WSClient, dasUserDAO:
   def oathDance(empref: String)(implicit request: RequestHeader): Future[Result] = {
     val params = Map(
       "clientId" -> Seq(clientId),
-      "redirectURI" -> Seq(routes.ClientController.claimCallback(None).absoluteURL()),
+      "redirectURI" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL()),
       "scope" -> Seq(empref) // TODO: Improve scope handling
     )
     Future.successful(Redirect(authorizeSchemeUri, params))
   }
 
-  def claimCallback(code: Option[String]) = UserAction.async { implicit request =>
+  def claimCallback(code: Option[String], state: Option[String]) = UserAction.async { implicit request =>
     val redirectToIndex = Redirect(controllers.routes.ClientController.index())
+    Logger.info(s"code: $code")
+    Logger.info(s"state: $state")
 
     code match {
       case None => Future.successful(Redirect(controllers.routes.ClientController.index()))
@@ -105,6 +107,11 @@ class ClientController @Inject()(config:ServiceConfig, ws: WSClient, dasUserDAO:
           Logger.info(Json.prettyPrint(response.json))
           val validUntil = System.currentTimeMillis() + (r.expires_in * 1000)
           SchemeClaimRow(r.scope, userId, r.access_token, validUntil, r.refresh_token)
+
+        case 401 =>
+          Logger.warn("Request to exchange code for token failed")
+          Logger.warn(s"Response message is: '${response.body}'")
+          throw new Exception(s"Request to exchange code for token failed with ${response.body}")
       }
     }
   }
