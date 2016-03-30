@@ -2,44 +2,33 @@ package controllers
 
 import javax.inject.Inject
 
+import cats.data.Xor._
 import db.{SchemeClaimDAO, SchemeClaimRow}
-import models.LevyDeclarations
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
-import play.api.mvc.{Action, Controller, RequestHeader}
-import views.html.helper
+import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class LevyController @Inject()(config: ServiceConfig, ws: WSClient, schemeClaims: SchemeClaimDAO)(implicit ec: ExecutionContext) extends Controller {
+class LevyController @Inject()(levyApi: LevyApi, config: ServiceConfig, ws: WSClient, schemeClaims: SchemeClaimDAO)(implicit ec: ExecutionContext) extends Controller {
 
   import config._
 
   def showEmpref(empref: String) = Action.async { implicit request =>
     schemeClaims.forEmpref(empref).flatMap {
       case Some(row) =>
-        val uri = apiBaseURI + s"/${helper.urlEncode(empref)}/levy-declarations"
         withFreshAccessToken(row).flatMap { authToken =>
-          Logger.info(s"calling $uri")
-          ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken").get.map { response =>
-            response.status match {
-              case 200 =>
-                Logger.info(response.body)
-                val decls = response.json.validate[LevyDeclarations]
-                Ok(views.html.declarations(decls.get))
-
-              case _ =>
-                Logger.error(s"Got status ${response.status}")
-                Logger.error(response.body)
-                throw new Exception(s"Got status ${response.status} with body '${response.body}'")
-            }
+          levyApi.declarations(empref, authToken).map {
+            case Right(decls) => Ok(views.html.declarations(decls))
+            case Left(err) => InternalServerError(err)
           }
         }
 
       case None => Future.successful(NotFound)
     }
   }
+
 
   def withFreshAccessToken(row: SchemeClaimRow)(implicit requestHeader: RequestHeader): Future[String] = {
     if (row.isAuthTokenExpired) {
