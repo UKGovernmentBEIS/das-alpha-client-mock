@@ -60,7 +60,7 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
   def oathDance(empref: String)(implicit request: RequestHeader): Future[Result] = {
     val params = Map(
       "client_id" -> Seq(clientId),
-      "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL()),
+      "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL(request.secure)),
       "scope" -> Seq("read:apprenticeship-levy")
     )
     Future.successful(Redirect(authorizeSchemeUri, params).addingToSession("empref" -> empref))
