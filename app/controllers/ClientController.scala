@@ -61,7 +61,7 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
     val params = Map(
       "client_id" -> Seq(clientId),
       "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL()),
-      "scope" -> Seq("read:epaye")
+      "scope" -> Seq("read:apprenticeship-levy")
     )
     Future.successful(Redirect(authorizeSchemeUri, params).addingToSession("empref" -> empref))
   }
