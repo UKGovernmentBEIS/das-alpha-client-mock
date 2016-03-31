@@ -60,7 +60,7 @@ class LevyController @Inject()(levyApi: LevyApi, config: ServiceConfig, ws: WSCl
           Logger.info(Json.prettyPrint(response.json))
           val validUntil = System.currentTimeMillis() + (r.expires_in * 1000)
           val updatedRow = row.copy(accessToken = r.access_token, validUntil = validUntil)
-          schemeClaims.updateClaim(updatedRow).map(_ => row)
+          schemeClaims.updateClaim(updatedRow).map(_ => updatedRow)
 
         case 401 =>
           Logger.error(response.body)
