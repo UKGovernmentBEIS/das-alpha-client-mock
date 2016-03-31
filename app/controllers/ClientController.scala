@@ -61,23 +61,23 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
     val params = Map(
       "client_id" -> Seq(clientId),
       "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL()),
-      "scope" -> Seq(empref) // TODO: Improve scope handling
+      "scope" -> Seq("read:epaye")
     )
-    Future.successful(Redirect(authorizeSchemeUri, params))
+    Future.successful(Redirect(authorizeSchemeUri, params).addingToSession("empref" -> empref))
   }
 
   def claimCallback(code: Option[String], state: Option[String]) = UserAction.async { implicit request =>
     val redirectToIndex = Redirect(controllers.routes.ClientController.index())
-    Logger.info(s"code: $code")
-    Logger.info(s"state: $state")
 
-    code match {
-      case None => Future.successful(Redirect(controllers.routes.ClientController.index()))
-      case Some(c) => convertCode(c, request.user.id).flatMap {
-        case Some(scr) => schemeClaimDAO.insert(scr).map { _ => redirectToIndex }
-        case None => Future.successful(redirectToIndex)
+    request.session.get("empref").map { empref =>
+      code match {
+        case None => Future.successful(Redirect(controllers.routes.ClientController.index()))
+        case Some(c) => convertCode(c, request.user.id, empref).flatMap {
+          case Some(scr) => schemeClaimDAO.insert(scr).map { _ => redirectToIndex }
+          case None => Future.successful(redirectToIndex)
+        }
       }
-    }
+    }.getOrElse(Future.successful(BadRequest("no 'empref' was present in session")))
   }
 
   case class AccessTokenResponse(access_token: String, expires_in: Long, scope: String, refresh_token: String, token_type: String)
@@ -86,12 +86,12 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
     implicit val format = Json.format[AccessTokenResponse]
   }
 
-  def convertCode(code: String, userId: Long)(implicit requestHeader: RequestHeader): Future[Option[SchemeClaimRow]] = {
-    callAuthServer(userId, code).map(Some(_))
+  def convertCode(code: String, userId: Long, empref: String)(implicit requestHeader: RequestHeader): Future[Option[SchemeClaimRow]] = {
+    callAuthServer(userId, code, empref).map(Some(_))
   }
 
 
-  def callAuthServer(userId: Long, authCode: String)(implicit rh: RequestHeader): Future[SchemeClaimRow] = {
+  def callAuthServer(userId: Long, authCode: String, empref: String)(implicit rh: RequestHeader): Future[SchemeClaimRow] = {
     val params = Map(
       "grant_type" -> "authorization_code",
       "code" -> authCode,
@@ -106,7 +106,7 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
           val r = response.json.validate[AccessTokenResponse].get
           Logger.info(Json.prettyPrint(response.json))
           val validUntil = System.currentTimeMillis() + (r.expires_in * 1000)
-          SchemeClaimRow(r.scope, userId, r.access_token, validUntil, r.refresh_token)
+          SchemeClaimRow(empref, userId, r.access_token, validUntil, r.refresh_token)
 
         case 401 =>
           Logger.warn("Request to exchange code for token failed")
