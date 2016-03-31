@@ -20,7 +20,7 @@ trait LevyApi {
 
 class LevyApiImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit ec: ExecutionContext) extends LevyApi {
   def declarations(empref: String, authToken: String)(implicit rh: RequestHeader): Future[Xor[String, LevyDeclarations]] = {
-    val uri = config.apiBaseURI + s"/${helper.urlEncode(empref)}/levy-declarations"
+    val uri = config.apiBaseURI + s"/${helper.urlEncode(empref)}/declarations"
 
     ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken").get.map { response =>
       response.status match {

@@ -9,7 +9,8 @@ import play.api.Configuration
 class ServiceConfig @Inject()(config: Configuration) {
   val taxserviceBaseURI = config.getString("taxservice.baseURI").get
 
-  val apiBaseURI = config.getString("api.baseURI").get
+  val apiHost = config.getString("api.host").get
+  val apiBaseURI = apiHost + "/apprenticeship-levy/epaye/empref"
 
   val accessTokenUri = s"$taxserviceBaseURI/oauth/token"
   val authorizeSchemeUri = s"$taxserviceBaseURI/oauth/authorize"
