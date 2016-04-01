@@ -24,7 +24,7 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
     else Valid
   }
 
-  def claimMapping(claimedSchemes: Seq[SchemeClaimRow]) = Form("empref" -> text.verifying(unclaimed(claimedSchemes)))
+  def claimMapping(claimedSchemes: Seq[SchemeClaimRow]) = Form("empref" -> nonEmptyText.verifying(unclaimed(claimedSchemes)))
 
   def index = Action {
     Redirect(controllers.routes.ClientController.showClaimScheme())
@@ -58,9 +58,10 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
   }
 
   def oathDance(empref: String)(implicit request: RequestHeader): Future[Result] = {
+
     val params = Map(
       "client_id" -> Seq(clientId),
-      "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL(request.secure)),
+      "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL(useSSL)),
       "scope" -> Seq("read:apprenticeship-levy")
     )
     Future.successful(Redirect(authorizeSchemeUri, params).addingToSession("empref" -> empref))
