@@ -2,20 +2,19 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import actions.{ClientUserAction, ClientUserRequest}
+import actions.ClientUserAction
 import db.{DASUserDAO, SchemeClaimDAO, SchemeClaimRow}
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation._
-import play.api.libs.json.Json
-import play.api.libs.ws.WSClient
 import play.api.mvc._
+import services.OAuth2Service
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
+class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Service, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
 
   import config._
 
@@ -70,40 +69,12 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
       code match {
         case None => Future.successful(Redirect(controllers.routes.ClientController.index()))
         case Some(c) => for {
-          scr <- convertCode(c, request.user.id, empref)
+          scr <- oAuth2Service.convertCode(c, request.user.id, empref)
           _ <- schemeClaimDAO.insert(scr)
         } yield redirectToIndex
       }
     }.getOrElse(Future.successful(BadRequest("no 'empref' was present in session")))
   }
 
-  case class AccessTokenResponse(access_token: String, expires_in: Long, scope: String, refresh_token: String, token_type: String)
-
-  implicit val atrFormat = Json.format[AccessTokenResponse]
-
-  def convertCode(code: String, userId: Long, empref: String)(implicit requestHeader: RequestHeader): Future[SchemeClaimRow] = {
-    val params = Map(
-      "grant_type" -> "authorization_code",
-      "code" -> code,
-      "redirect_uri" -> "http://localhost:9000/",
-      "client_id" -> clientId,
-      "client_secret" -> clientSecret
-    ).map { case (k, v) => k -> Seq(v) }
-
-    ws.url(accessTokenUri).post(params).map { response =>
-      response.status match {
-        case 200 =>
-          val r = response.json.validate[AccessTokenResponse].get
-          Logger.info(Json.prettyPrint(response.json))
-          val validUntil = System.currentTimeMillis() + (r.expires_in * 1000)
-          SchemeClaimRow(empref, userId, r.access_token, validUntil, r.refresh_token)
-
-        case 401 =>
-          Logger.warn("Request to exchange code for token failed")
-          Logger.warn(s"Response message is: '${response.body}'")
-          throw new Exception(s"Request to exchange code for token failed with ${response.body}")
-      }
-    }
-  }
 }
 
