@@ -3,7 +3,7 @@ package controllers
 import javax.inject.{Inject, Singleton}
 
 import actions.ClientUserAction
-import db.DASUserDAO
+import db.DASUserOps
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.{Action, Controller}
@@ -13,7 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
 case class ClientUserData(name: String, password: String)
 
 @Singleton
-class ClientSignInController @Inject()(dasUserDAO: DASUserDAO, UserAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
+class ClientSignInController @Inject()(dasUserDAO: DASUserOps, UserAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
 
   val signInForm = Form(
     mapping(

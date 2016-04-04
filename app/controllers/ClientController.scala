@@ -3,7 +3,7 @@ package controllers
 import javax.inject.{Inject, Singleton}
 
 import actions.ClientUserAction
-import db.{DASUserDAO, SchemeClaimDAO, SchemeClaimRow}
+import db.{DASUserOps, SchemeClaimOps, SchemeClaimRow}
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
@@ -14,7 +14,7 @@ import services.OAuth2Service
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Service, dasUserDAO: DASUserDAO, UserAction: ClientUserAction, schemeClaimDAO: SchemeClaimDAO)(implicit exec: ExecutionContext) extends Controller {
+class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Service, users: DASUserOps, claims: SchemeClaimOps, UserAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
 
   import config._
 
@@ -31,13 +31,13 @@ class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Ser
   }
 
   def showClaimScheme = UserAction.async { request =>
-    schemeClaimDAO.forUser(request.user.id).map { claimedSchemes =>
+    claims.forUser(request.user.id).map { claimedSchemes =>
       Ok(views.html.claimScheme(claimMapping(claimedSchemes, request.user.id), request.user, claimedSchemes))
     }
   }
 
   def claimScheme = UserAction.async { implicit request =>
-    schemeClaimDAO.all().flatMap { allClaims =>
+    claims.all().flatMap { allClaims =>
       claimMapping(allClaims, request.user.id).bindFromRequest().fold(
         formWithErrors => Future.successful(Ok(views.html.claimScheme(formWithErrors, request.user, allClaims.filter(_.userId == request.user.id)))),
         empref => startOauthDance(empref)
@@ -47,7 +47,7 @@ class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Ser
 
   def removeScheme(empref: String) = UserAction.async { implicit request =>
     Logger.info(s"Trying to remove claim of $empref for user ${request.user.id}")
-    schemeClaimDAO.removeClaimForUser(empref, request.user.id).map { count =>
+    claims.removeClaimForUser(empref, request.user.id).map { count =>
       Logger.info(s"removed $count rows")
       Redirect(controllers.routes.ClientController.index())
     }
@@ -72,7 +72,7 @@ class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Ser
           atr <- oAuth2Service.convertCode(c, request.user.id, empref)
           validUntil = System.currentTimeMillis() + (atr.expires_in * 1000)
           scr = SchemeClaimRow(empref, request.user.id, atr.access_token, validUntil, atr.refresh_token)
-          _ <- schemeClaimDAO.insert(scr)
+          _ <- claims.insert(scr)
         } yield redirectToIndex
       }
     }.getOrElse(Future.successful(BadRequest("no 'empref' was present in session")))

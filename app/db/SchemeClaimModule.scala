@@ -2,6 +2,7 @@ package db
 
 import javax.inject.{Inject, Singleton}
 
+import com.google.inject.ImplementedBy
 import org.joda.time.DateTime
 import play.api.db.slick.DatabaseConfigProvider
 
@@ -10,6 +11,25 @@ import scala.concurrent.{ExecutionContext, Future}
 case class SchemeClaimRow(empref: String, userId: Long, accessToken: String, validUntil: Long, refreshToken: String) {
   def isAuthTokenExpired: Boolean = new DateTime(validUntil).isBeforeNow
 }
+
+@ImplementedBy(classOf[SchemeClaimDAO])
+trait SchemeClaimOps {
+
+  def all(): Future[Seq[SchemeClaimRow]]
+
+  def forUser(userId: Long): Future[Seq[SchemeClaimRow]]
+
+  def forEmpref(empref: String): Future[Option[SchemeClaimRow]]
+
+  def updateClaim(row: SchemeClaimRow): Future[Int]
+
+  def removeClaimForUser(empref: String, userId: Long): Future[Int]
+
+  def removeAllClaimsForUser(userId: Long): Future[Int]
+
+  def insert(cat: SchemeClaimRow): Future[Unit]
+}
+
 
 trait SchemeClaimModule extends DBModule {
 
@@ -37,11 +57,12 @@ trait SchemeClaimModule extends DBModule {
 }
 
 @Singleton
-class SchemeClaimDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(implicit val ec: ExecutionContext) extends SchemeClaimModule {
+class SchemeClaimDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(implicit val ec: ExecutionContext)
+  extends SchemeClaimModule with SchemeClaimOps {
 
   import driver.api._
 
-  def all() :Future[Seq[SchemeClaimRow]] = db.run(SchemeClaims.result)
+  def all(): Future[Seq[SchemeClaimRow]] = db.run(SchemeClaims.result)
 
   def forUser(userId: Long): Future[Seq[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.dasUserId === userId).result)
 

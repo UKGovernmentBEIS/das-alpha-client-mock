@@ -3,17 +3,17 @@ package controllers
 import javax.inject.Inject
 
 import cats.data.Xor._
-import db.{SchemeClaimDAO, SchemeClaimRow}
+import db.{SchemeClaimOps, SchemeClaimRow}
 import play.api.Logger
 import play.api.mvc._
 import services.OAuth2Service
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class LevyController @Inject()(levyApi: LevyApi, config: ServiceConfig, oAuth2Service: OAuth2Service, schemeClaims: SchemeClaimDAO)(implicit ec: ExecutionContext) extends Controller {
+class LevyController @Inject()(levyApi: LevyApi, config: ServiceConfig, oAuth2Service: OAuth2Service, claims: SchemeClaimOps)(implicit ec: ExecutionContext) extends Controller {
 
   def showEmpref(empref: String) = Action.async { implicit request =>
-    schemeClaims.forEmpref(empref).flatMap {
+    claims.forEmpref(empref).flatMap {
       case Some(row) =>
         withFreshAccessToken(row).flatMap { authToken =>
           levyApi.declarations(empref, authToken).map {
@@ -33,7 +33,7 @@ class LevyController @Inject()(levyApi: LevyApi, config: ServiceConfig, oAuth2Se
         rtr <- oAuth2Service.refreshAccessToken(row.refreshToken)
         validUntil = System.currentTimeMillis() + (rtr.expires_in * 1000)
         updatedRow = row.copy(accessToken = rtr.access_token, validUntil = validUntil)
-        _ <- schemeClaims.updateClaim(updatedRow)
+        _ <- claims.updateClaim(updatedRow)
       } yield updatedRow.accessToken
     } else {
       Future.successful(row.accessToken)

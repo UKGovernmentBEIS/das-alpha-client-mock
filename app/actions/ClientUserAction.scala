@@ -1,7 +1,7 @@
 package actions
 
 import com.google.inject.Inject
-import db.{DASUserDAO, DASUserRow}
+import db.{DASUserOps, DASUserRow}
 import play.api.mvc.Results._
 import play.api.mvc._
 
@@ -10,7 +10,7 @@ import scala.util.Try
 
 class ClientUserRequest[A](val request: Request[A], val user: DASUserRow) extends WrappedRequest[A](request)
 
-class ClientUserAction @Inject()(dasUsers: DASUserDAO)(implicit ec: ExecutionContext)
+class ClientUserAction @Inject()(dasUsers: DASUserOps)(implicit ec: ExecutionContext)
   extends ActionBuilder[ClientUserRequest]
     with ActionRefiner[Request, ClientUserRequest] {
 
