@@ -41,6 +41,8 @@ class SchemeClaimDAO @Inject()(protected val dbConfigProvider: DatabaseConfigPro
 
   import driver.api._
 
+  def all() :Future[Seq[SchemeClaimRow]] = db.run(SchemeClaims.result)
+
   def forUser(userId: Long): Future[Seq[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.dasUserId === userId).result)
 
   def forEmpref(empref: String): Future[Option[SchemeClaimRow]] = db.run(SchemeClaims.filter(_.empref === empref).result.headOption)

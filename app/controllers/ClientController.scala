@@ -19,12 +19,13 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
 
   import config._
 
-  def unclaimed(claimed: Seq[SchemeClaimRow]): Constraint[String] = Constraint[String]("already claimed") { empref =>
-    if (claimed.map(_.empref.trim()).contains(empref.trim())) Invalid(ValidationError(s"you have already claimed scheme $empref"))
+  def unclaimed(claims: Seq[SchemeClaimRow], userId: Long): Constraint[String] = Constraint[String]("already claimed") { empref =>
+    if (claims.exists(row => row.empref.trim() == empref.trim() && row.userId == userId)) Invalid(ValidationError(s"you have already claimed scheme $empref"))
+    else if (claims.exists(row => row.empref.trim() == empref.trim())) Invalid(ValidationError(s"another user has already claimed scheme $empref"))
     else Valid
   }
 
-  def claimMapping(claimedSchemes: Seq[SchemeClaimRow]) = Form("empref" -> nonEmptyText.verifying(unclaimed(claimedSchemes)))
+  def claimMapping(claimedSchemes: Seq[SchemeClaimRow], userId: Long) = Form("empref" -> nonEmptyText.verifying(unclaimed(claimedSchemes, userId)))
 
   def index = Action {
     Redirect(controllers.routes.ClientController.showClaimScheme())
@@ -36,14 +37,14 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
 
   def showClaimPage(request: ClientUserRequest[AnyContent]): Future[Result] = {
     schemeClaimDAO.forUser(request.user.id).map { claimedSchemes =>
-      Ok(views.html.claimScheme(claimMapping(claimedSchemes), request.user, claimedSchemes))
+      Ok(views.html.claimScheme(claimMapping(claimedSchemes, request.user.id), request.user, claimedSchemes))
     }
   }
 
   def claimScheme = UserAction.async { implicit request =>
-    schemeClaimDAO.forUser(request.user.id).flatMap { claimedSchemes =>
-      claimMapping(claimedSchemes).bindFromRequest().fold(
-        formWithErrors => Future.successful(Ok(views.html.claimScheme(formWithErrors, request.user, claimedSchemes))),
+    schemeClaimDAO.all().flatMap { allClaims =>
+      claimMapping(allClaims, request.user.id).bindFromRequest().fold(
+        formWithErrors => Future.successful(Ok(views.html.claimScheme(formWithErrors, request.user, allClaims.filter(_.userId == request.user.id)))),
         empref => oathDance(empref)
       )
     }
