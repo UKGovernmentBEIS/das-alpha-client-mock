@@ -2,6 +2,7 @@ package services
 
 import javax.inject.Inject
 
+import com.google.inject.ImplementedBy
 import controllers.ServiceConfig
 import play.api.Logger
 import play.api.libs.json.Json
@@ -13,7 +14,14 @@ case class AccessTokenResponse(access_token: String, expires_in: Long, scope: St
 
 case class RefreshTokenResponse(access_token: String, expires_in: Long)
 
-class OAuth2Service @Inject()(config: ServiceConfig, ws: WSClient)(implicit ec: ExecutionContext) {
+@ImplementedBy(classOf[OAuth2ServiceImpl])
+trait OAuth2Service {
+  def convertCode(code: String, userId: Long, empref: String): Future[AccessTokenResponse]
+
+  def refreshAccessToken(refreshToken: String): Future[RefreshTokenResponse]
+}
+
+class OAuth2ServiceImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit ec: ExecutionContext) extends OAuth2Service {
 
   import config._
 
@@ -43,7 +51,7 @@ class OAuth2Service @Inject()(config: ServiceConfig, ws: WSClient)(implicit ec: 
 
   implicit val rtrFormat = Json.format[RefreshTokenResponse]
 
-  def refreshAccessToken(refreshToken:String): Future[RefreshTokenResponse] = {
+  def refreshAccessToken(refreshToken: String): Future[RefreshTokenResponse] = {
     val params = Map(
       "grant_type" -> "refresh_token",
       "refresh_token" -> refreshToken,
