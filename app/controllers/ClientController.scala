@@ -32,10 +32,6 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
   }
 
   def showClaimScheme = UserAction.async { request =>
-    showClaimPage(request)
-  }
-
-  def showClaimPage(request: ClientUserRequest[AnyContent]): Future[Result] = {
     schemeClaimDAO.forUser(request.user.id).map { claimedSchemes =>
       Ok(views.html.claimScheme(claimMapping(claimedSchemes, request.user.id), request.user, claimedSchemes))
     }
@@ -45,7 +41,7 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
     schemeClaimDAO.all().flatMap { allClaims =>
       claimMapping(allClaims, request.user.id).bindFromRequest().fold(
         formWithErrors => Future.successful(Ok(views.html.claimScheme(formWithErrors, request.user, allClaims.filter(_.userId == request.user.id)))),
-        empref => oathDance(empref)
+        empref => startOauthDance(empref)
       )
     }
   }
@@ -58,8 +54,7 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
     }
   }
 
-  def oathDance(empref: String)(implicit request: RequestHeader): Future[Result] = {
-
+  def startOauthDance(empref: String)(implicit request: RequestHeader): Future[Result] = {
     val params = Map(
       "client_id" -> Seq(clientId),
       "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL(useSSL)),
@@ -74,29 +69,22 @@ class ClientController @Inject()(config: ServiceConfig, ws: WSClient, dasUserDAO
     request.session.get("empref").map { empref =>
       code match {
         case None => Future.successful(Redirect(controllers.routes.ClientController.index()))
-        case Some(c) => convertCode(c, request.user.id, empref).flatMap {
-          case Some(scr) => schemeClaimDAO.insert(scr).map { _ => redirectToIndex }
-          case None => Future.successful(redirectToIndex)
-        }
+        case Some(c) => for {
+          scr <- convertCode(c, request.user.id, empref)
+          _ <- schemeClaimDAO.insert(scr)
+        } yield redirectToIndex
       }
     }.getOrElse(Future.successful(BadRequest("no 'empref' was present in session")))
   }
 
   case class AccessTokenResponse(access_token: String, expires_in: Long, scope: String, refresh_token: String, token_type: String)
 
-  object AccessTokenResponse {
-    implicit val format = Json.format[AccessTokenResponse]
-  }
+  implicit val atrFormat = Json.format[AccessTokenResponse]
 
-  def convertCode(code: String, userId: Long, empref: String)(implicit requestHeader: RequestHeader): Future[Option[SchemeClaimRow]] = {
-    callAuthServer(userId, code, empref).map(Some(_))
-  }
-
-
-  def callAuthServer(userId: Long, authCode: String, empref: String)(implicit rh: RequestHeader): Future[SchemeClaimRow] = {
+  def convertCode(code: String, userId: Long, empref: String)(implicit requestHeader: RequestHeader): Future[SchemeClaimRow] = {
     val params = Map(
       "grant_type" -> "authorization_code",
-      "code" -> authCode,
+      "code" -> code,
       "redirect_uri" -> "http://localhost:9000/",
       "client_id" -> clientId,
       "client_secret" -> clientSecret
