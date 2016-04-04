@@ -69,7 +69,9 @@ class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Ser
       code match {
         case None => Future.successful(Redirect(controllers.routes.ClientController.index()))
         case Some(c) => for {
-          scr <- oAuth2Service.convertCode(c, request.user.id, empref)
+          atr <- oAuth2Service.convertCode(c, request.user.id, empref)
+          validUntil = System.currentTimeMillis() + (atr.expires_in * 1000)
+          scr = SchemeClaimRow(empref, request.user.id, atr.access_token, validUntil, atr.refresh_token)
           _ <- schemeClaimDAO.insert(scr)
         } yield redirectToIndex
       }

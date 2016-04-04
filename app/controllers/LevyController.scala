@@ -30,7 +30,9 @@ class LevyController @Inject()(levyApi: LevyApi, config: ServiceConfig, oAuth2Se
     if (row.isAuthTokenExpired) {
       Logger.info(s"access token has expired - refreshing")
       for {
-        updatedRow <- oAuth2Service.refreshAccessToken(row)
+        rtr <- oAuth2Service.refreshAccessToken(row.refreshToken)
+        validUntil = System.currentTimeMillis() + (rtr.expires_in * 1000)
+        updatedRow = row.copy(accessToken = rtr.access_token, validUntil = validUntil)
         _ <- schemeClaims.updateClaim(updatedRow)
       } yield updatedRow.accessToken
     } else {
