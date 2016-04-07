@@ -24,9 +24,7 @@ class LevyApiImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit ec: Ex
 
     ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken").get.map { response =>
       response.status match {
-        case 200 =>
-          Logger.info(response.body)
-          Right(response.json.validate[LevyDeclarations].get)
+        case 200 => Right(response.json.validate[LevyDeclarations].get)
 
         case _ =>
           Logger.error(s"Got status ${response.status} calling levy api")

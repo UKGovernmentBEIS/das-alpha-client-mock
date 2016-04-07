@@ -18,7 +18,7 @@ case class RefreshTokenResponse(access_token: String, expires_in: Long)
 trait OAuth2Service {
   def convertCode(code: String, userId: Long, empref: String): Future[AccessTokenResponse]
 
-  def refreshAccessToken(refreshToken: String): Future[RefreshTokenResponse]
+  def refreshAccessToken(refreshToken: String): Future[Option[RefreshTokenResponse]]
 }
 
 class OAuth2ServiceImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit ec: ExecutionContext) extends OAuth2Service {
@@ -51,7 +51,7 @@ class OAuth2ServiceImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit 
 
   implicit val rtrFormat = Json.format[RefreshTokenResponse]
 
-  def refreshAccessToken(refreshToken: String): Future[RefreshTokenResponse] = {
+  def refreshAccessToken(refreshToken: String): Future[Option[RefreshTokenResponse]] = {
     val params = Map(
       "grant_type" -> "refresh_token",
       "refresh_token" -> refreshToken,
@@ -61,15 +61,15 @@ class OAuth2ServiceImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit 
 
     ws.url(accessTokenUri).post(params).map { response =>
       response.status match {
-        case 200 => response.json.validate[RefreshTokenResponse].get
+        case 200 => response.json.validate[RefreshTokenResponse].asOpt
 
         case 401 =>
           Logger.error(response.body)
-          throw new Exception(response.body)
+          None
 
         case 400 =>
           Logger.error(response.body)
-          throw new Exception("bad request")
+          None
       }
     }
   }
