@@ -1,8 +1,10 @@
 name := """das-alpha-client-mock"""
 
-version := "1.0-SNAPSHOT"
-
 enablePlugins(PlayScala)
+enablePlugins(GitVersioning)
+enablePlugins(GitBranchPrompt)
+
+git.useGitDescribe := true
 
 routesImport += "uk.gov.hmrc.domain._, models.PlayBindings._"
 
