@@ -37,7 +37,9 @@ class LevyController @Inject()(levyApi: LevyApi, config: ServiceConfig, oAuth2Se
           val updatedRow = row.copy(accessToken = rtr.access_token, validUntil = validUntil)
           claims.updateClaim(updatedRow).map(_ => Some(updatedRow.accessToken))
 
-        case None => Future.successful(None)
+        case None =>
+          Logger.warn(s"Failed to refresh access token using refresh token ${row.refreshToken}")
+          Future.successful(None)
       }
     } else {
       Future.successful(Some(row.accessToken))

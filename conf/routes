@@ -3,17 +3,20 @@
 # ~~~~
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file             controllers.Assets.at(path="/public", file)
+GET         /assets/*file              controllers.Assets.at(path="/public", file)
 
 # Routes for the API
-GET         /                         controllers.ClientController.index
-GET         /sign-out                 controllers.ClientSignInController.signOut
-GET         /sign-in                  controllers.ClientSignInController.showSignIn
-POST        /sign-in                  controllers.ClientSignInController.handleSignIn
+GET         /                          controllers.ClientController.index
+GET         /sign-out                  controllers.ClientSignInController.signOut
+GET         /sign-in                   controllers.ClientSignInController.showSignIn
+POST        /sign-in                   controllers.ClientSignInController.handleSignIn
 
-GET         /levy-declarations        controllers.LevyController.showEmpref(empref:String)
+GET         /levy-declarations         controllers.LevyController.showEmpref(empref:String)
 
-GET         /claim-scheme             controllers.ClientController.showClaimScheme
-POST        /claim-scheme             controllers.ClientController.claimScheme
-GET         /remove-scheme            controllers.ClientController.removeScheme(empref:String)
-GET         /claim-callback           controllers.ClientController.claimCallback(code:Option[String], state:Option[String])
+GET         /claim-scheme              controllers.ClientController.showClaimScheme
+POST        /claim-scheme              controllers.ClientController.claimScheme
+GET         /remove-scheme             controllers.ClientController.removeScheme(empref:String)
+GET         /claim-callback            controllers.ClientController.claimCallback(code:Option[String], state:Option[String])
+
+GET         /admin                     controllers.AdminController.index()
+GET         /admin/expire-token        controllers.AdminController.expireToken(token:String)

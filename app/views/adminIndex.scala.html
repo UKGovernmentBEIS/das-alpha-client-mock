@@ -1,0 +1,45 @@
+@import db.SchemeClaimRow
+@(claims: Seq[SchemeClaimRow])
+
+@proposition = {
+    <div class="header-proposition">
+        <div class="content">
+            <nav id="proposition-menu" class="header__menu" role="navigation">
+                <span class="header__menu__proposition-name">Digital Apprenticeship Service</span>
+
+                <ul id="proposition-links" class="header__menu__proposition-links">
+                    <li><a href="@controllers.routes.ClientController.index()">Back</a></li>
+                    <li><a id="logOutNavHref" href="@controllers.routes.ClientSignInController.signOut()" data-journey-click="primary-navigation:Click:Sign out">
+                        Sign out</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+}
+
+@main("Admin", insideHeader = proposition) {
+    <table>
+        <thead>
+            <tr>
+                <th>EmpRef</th>
+                <th>User Id</th>
+                <th>Access Token</th>
+                <th>Refresh Token</th>
+                <th>Valid Until</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @claims.map { claim =>
+            <tr>
+                <td>@claim.empref</td>
+                <td>@claim.userId</td>
+                <td>@claim.accessToken</td>
+                <td>@claim.refreshToken</td>
+                <td>@claim.validUntilString</td>
+                <td><a href="@controllers.routes.AdminController.expireToken(claim.accessToken)">expire</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

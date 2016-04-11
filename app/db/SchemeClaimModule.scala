@@ -4,12 +4,14 @@ import javax.inject.{Inject, Singleton}
 
 import com.google.inject.ImplementedBy
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import play.api.db.slick.DatabaseConfigProvider
 
 import scala.concurrent.{ExecutionContext, Future}
 
 case class SchemeClaimRow(empref: String, userId: Long, accessToken: String, validUntil: Long, refreshToken: String) {
   def isAuthTokenExpired: Boolean = new DateTime(validUntil).isBeforeNow
+  val validUntilString: String = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss ZZ").print(validUntil)
 }
 
 @ImplementedBy(classOf[SchemeClaimDAO])
@@ -28,6 +30,8 @@ trait SchemeClaimOps {
   def removeAllClaimsForUser(userId: Long): Future[Int]
 
   def insert(cat: SchemeClaimRow): Future[Unit]
+
+  def expireToken(token: String): Future[Int]
 }
 
 
@@ -79,4 +83,12 @@ class SchemeClaimDAO @Inject()(protected val dbConfigProvider: DatabaseConfigPro
   def removeAllClaimsForUser(userId: Long): Future[Int] = db.run(SchemeClaims.filter(_.dasUserId === userId).delete)
 
   def insert(cat: SchemeClaimRow): Future[Unit] = db.run(SchemeClaims += cat).map { _ => () }
+
+  override def expireToken(token: String): Future[Int] = db.run {
+    val q = for {
+      c <- SchemeClaims if c.accessToken === token
+    } yield c.validUntil
+
+    q.update(System.currentTimeMillis())
+  }
 }
