@@ -27,7 +27,7 @@
                     <h3>Your claimed schemes</h3>
                 }
                 <ul>
-                @claimedSchemes.map { s => <li>
+                @claimedSchemes.sortBy(_.empref).map { s => <li>
                     <a href="@controllers.routes.LevyController.showEmpref(s.empref)">@s.empref</a> <a href="@controllers.routes.ClientController.removeScheme(s.empref)">
                     remove</a>
                 </li>

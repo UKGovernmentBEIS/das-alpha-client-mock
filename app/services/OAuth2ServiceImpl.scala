@@ -40,9 +40,9 @@ class OAuth2ServiceImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit 
       response.status match {
         case 200 => response.json.validate[AccessTokenResponse].get
 
-        case 401 =>
+        case s =>
           Logger.warn("Request to exchange code for token failed")
-          Logger.warn(s"Response message is: '${response.body}'")
+          Logger.warn(s"Response is $s with body: '${response.body}'")
           throw new Exception(s"Request to exchange code for token failed with ${response.body}")
 
       }
@@ -63,11 +63,7 @@ class OAuth2ServiceImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit 
       response.status match {
         case 200 => response.json.validate[RefreshTokenResponse].asOpt
 
-        case 401 =>
-          Logger.error(response.body)
-          None
-
-        case 400 =>
+        case s =>
           Logger.error(response.body)
           None
       }
