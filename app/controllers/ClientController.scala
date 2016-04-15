@@ -46,9 +46,7 @@ class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Ser
   }
 
   def removeScheme(empref: String) = UserAction.async { implicit request =>
-    Logger.info(s"Trying to remove claim of $empref for user ${request.user.id}")
     claims.removeClaimForUser(empref, request.user.id).map { count =>
-      Logger.info(s"removed $count rows")
       Redirect(controllers.routes.ClientController.index())
     }
   }
