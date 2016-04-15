@@ -9,7 +9,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation._
 import play.api.mvc._
-import services.OAuth2Service
+import services.{OAuth2Service, ServiceConfig}
 
 import scala.concurrent.{ExecutionContext, Future}
 

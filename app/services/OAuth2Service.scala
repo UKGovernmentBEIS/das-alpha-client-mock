@@ -3,7 +3,6 @@ package services
 import javax.inject.Inject
 
 import com.google.inject.ImplementedBy
-import controllers.ServiceConfig
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient

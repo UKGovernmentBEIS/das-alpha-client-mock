@@ -1,4 +1,4 @@
-package controllers
+package services
 
 import javax.inject.{Inject, Singleton}
 
