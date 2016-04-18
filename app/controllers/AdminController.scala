@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.Inject
 
-import db.SchemeClaimOps
+import data.SchemeClaimOps
 import play.api.mvc.{Action, Controller}
 
 import scala.concurrent.ExecutionContext

@@ -3,7 +3,7 @@ package controllers
 import javax.inject.{Inject, Singleton}
 
 import actions.ClientUserAction
-import db.DASUserOps
+import data.DASUserOps
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.{Action, Controller}

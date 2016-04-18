@@ -1,5 +1,5 @@
-@import db.{DASUserRow, SchemeClaimRow}
-@(form: Form[_], user: DASUserRow, claimedSchemes: Seq[SchemeClaimRow])
+@import data.{DASUser, SchemeClaim}
+@(form: Form[_], user: DASUser, claimedSchemes: Seq[SchemeClaim])
 
     @proposition = {
         <div class="header-proposition">

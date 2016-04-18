@@ -3,8 +3,7 @@ package controllers
 import javax.inject.{Inject, Singleton}
 
 import actions.ClientUserAction
-import db.{DASUserOps, SchemeClaimOps, SchemeClaimRow}
-import play.api.Logger
+import data.{DASUserOps, SchemeClaim, SchemeClaimOps}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation._
@@ -18,13 +17,13 @@ class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Ser
 
   import config._
 
-  def unclaimed(claims: Seq[SchemeClaimRow], userId: Long): Constraint[String] = Constraint[String]("already claimed") { empref =>
+  def unclaimed(claims: Seq[SchemeClaim], userId: Long): Constraint[String] = Constraint[String]("already claimed") { empref =>
     if (claims.exists(row => row.empref.trim() == empref.trim() && row.userId == userId)) Invalid(ValidationError(s"you have already claimed scheme $empref"))
     else if (claims.exists(row => row.empref.trim() == empref.trim())) Invalid(ValidationError(s"another user has already claimed scheme $empref"))
     else Valid
   }
 
-  def claimMapping(claimedSchemes: Seq[SchemeClaimRow], userId: Long) = Form("empref" -> nonEmptyText.verifying(unclaimed(claimedSchemes, userId)))
+  def claimMapping(claimedSchemes: Seq[SchemeClaim], userId: Long) = Form("empref" -> nonEmptyText.verifying(unclaimed(claimedSchemes, userId)))
 
   def index = Action {
     Redirect(controllers.routes.ClientController.showClaimScheme())
@@ -69,7 +68,7 @@ class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Ser
         case Some(c) => for {
           atr <- oAuth2Service.convertCode(c, request.user.id, empref)
           validUntil = System.currentTimeMillis() + (atr.expires_in * 1000)
-          scr = SchemeClaimRow(empref, request.user.id, atr.access_token, validUntil, atr.refresh_token)
+          scr = SchemeClaim(empref, request.user.id, atr.access_token, validUntil, atr.refresh_token)
           _ <- claims.insert(scr)
         } yield redirectToIndex
       }

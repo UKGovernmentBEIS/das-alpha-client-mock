@@ -3,7 +3,7 @@ package controllers
 import javax.inject.Inject
 
 import cats.data.Xor._
-import db.{SchemeClaimOps, SchemeClaimRow}
+import data.{SchemeClaim, SchemeClaimOps}
 import play.api.Logger
 import play.api.mvc._
 import services.{LevyApiService, OAuth2Service, ServiceConfig}
@@ -28,7 +28,7 @@ class LevyController @Inject()(levyApi: LevyApiService, config: ServiceConfig, o
     }
   }
 
-  def withFreshAccessToken(row: SchemeClaimRow)(implicit requestHeader: RequestHeader): Future[Option[String]] = {
+  def withFreshAccessToken(row: SchemeClaim)(implicit requestHeader: RequestHeader): Future[Option[String]] = {
     if (row.isAuthTokenExpired) {
       Logger.info(s"access token has expired - refreshing")
       oAuth2Service.refreshAccessToken(row.refreshToken).flatMap {

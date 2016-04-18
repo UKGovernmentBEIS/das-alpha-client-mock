@@ -2,21 +2,10 @@ package db
 
 import javax.inject.{Inject, Singleton}
 
-import com.google.inject.ImplementedBy
+import data.{DASUser, DASUserOps}
 import play.api.db.slick.DatabaseConfigProvider
 
 import scala.concurrent.{ExecutionContext, Future}
-
-case class DASUserRow(id: Long, name: String, hashedPassword: String)
-
-@ImplementedBy(classOf[DASUserDAO])
-trait DASUserOps {
-  def byId(id: Long): Future[Option[DASUserRow]]
-
-  def byName(s: String): Future[Option[DASUserRow]]
-
-  def validate(username: String, password: String): Future[Option[DASUserRow]]
-}
 
 trait DASUserModule extends SlickModule {
 
@@ -24,8 +13,7 @@ trait DASUserModule extends SlickModule {
 
   val DASUsers = TableQuery[DASUserTable]
 
-
-  class DASUserTable(tag: Tag) extends Table[DASUserRow](tag, "das_user") {
+  class DASUserTable(tag: Tag) extends Table[DASUser](tag, "das_user") {
 
     def id = column[Long]("id", O.PrimaryKey)
 
@@ -33,7 +21,7 @@ trait DASUserModule extends SlickModule {
 
     def password = column[String]("password")
 
-    def * = (id, name, password) <>(DASUserRow.tupled, DASUserRow.unapply)
+    def * = (id, name, password) <>(DASUser.tupled, DASUser.unapply)
   }
 
 }
@@ -43,11 +31,11 @@ class DASUserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvide
 
   import driver.api._
 
-  override def validate(username: String, password: String): Future[Option[DASUserRow]] = db.run {
+  override def validate(username: String, password: String): Future[Option[DASUser]] = db.run {
     DASUsers.filter(u => u.name === username && u.password === password).result.headOption
   }
 
-  override def byId(id: Long): Future[Option[DASUserRow]] = db.run(DASUsers.filter(_.id === id).result.headOption)
+  override def byId(id: Long): Future[Option[DASUser]] = db.run(DASUsers.filter(_.id === id).result.headOption)
 
-  override def byName(s: String): Future[Option[DASUserRow]] = db.run(DASUsers.filter(u => u.name === s).result.headOption)
+  override def byName(s: String): Future[Option[DASUser]] = db.run(DASUsers.filter(u => u.name === s).result.headOption)
 }

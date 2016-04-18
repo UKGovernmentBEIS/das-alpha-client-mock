@@ -1,14 +1,14 @@
 package actions
 
 import com.google.inject.Inject
-import db.{DASUserOps, DASUserRow}
+import data.{DASUser, DASUserOps}
 import play.api.mvc.Results._
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-class ClientUserRequest[A](val request: Request[A], val user: DASUserRow) extends WrappedRequest[A](request)
+class ClientUserRequest[A](val request: Request[A], val user: DASUser) extends WrappedRequest[A](request)
 
 class ClientUserAction @Inject()(dasUsers: DASUserOps)(implicit ec: ExecutionContext)
   extends ActionBuilder[ClientUserRequest]
