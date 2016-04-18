@@ -5,6 +5,6 @@ import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext
 
-trait DBModule extends HasDatabaseConfigProvider[JdbcProfile] {
+trait SlickModule extends HasDatabaseConfigProvider[JdbcProfile] {
   implicit def ec: ExecutionContext
 }

@@ -18,7 +18,7 @@ trait DASUserOps {
   def validate(username: String, password: String): Future[Option[DASUserRow]]
 }
 
-trait DASUserModule extends DBModule {
+trait DASUserModule extends SlickModule {
 
   import driver.api._
 

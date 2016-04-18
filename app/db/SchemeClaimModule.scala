@@ -35,7 +35,7 @@ trait SchemeClaimOps {
 }
 
 
-trait SchemeClaimModule extends DBModule {
+trait SchemeClaimModule extends SlickModule {
 
   import driver.api._
 
