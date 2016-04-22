@@ -54,7 +54,7 @@ class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Ser
     val params = Map(
       "client_id" -> Seq(clientId),
       "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL(useSSL)),
-      "scope" -> Seq("read:apprenticeship-levy")
+      "scope" -> Seq("read:apprenticeship-levy openid taxids profile")
     )
     Future.successful(Redirect(authorizeSchemeUri, params).addingToSession("empref" -> empref))
   }
