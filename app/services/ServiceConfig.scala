@@ -1,22 +1,22 @@
 package services
 
-import javax.inject.{Inject, Singleton}
+case class ServiceConfig(taxservice: TaxServiceConfig, api: ApiConfig, client: ClientConfig)
 
-import play.api.Configuration
+case class ClientConfig(id: String, secret: String, useSSL: Boolean)
+
+case class ApiConfig(host: String) {
+  val baseURI = host + "/apprenticeship-levy/epaye"
+}
+
+case class TaxServiceConfig(baseURI: String) {
+  val accessTokenUri = s"$baseURI/oauth/token"
+  val authorizeSchemeUri = s"$baseURI/oauth/authorize"
+}
 
 
-@Singleton
-class ServiceConfig @Inject()(config: Configuration) {
-  val taxserviceBaseURI = config.getString("taxservice.baseURI").getOrElse("http://localhost:9002")
+object ServiceConfig {
 
-  val apiHost = config.getString("api.host").getOrElse("http://localhost:9001")
-  val apiBaseURI = apiHost + "/apprenticeship-levy/epaye/empref"
+  import pureconfig._
 
-  val accessTokenUri = s"$taxserviceBaseURI/oauth/token"
-  val authorizeSchemeUri = s"$taxserviceBaseURI/oauth/authorize"
-
-  val clientId = config.getString("client.id").getOrElse("client1")
-  val clientSecret = config.getString("client.secret").getOrElse("secret1")
-
-  val useSSL = config.getBoolean("client.useSSL").getOrElse(false)
+  lazy val config = loadConfig[ServiceConfig].get
 }

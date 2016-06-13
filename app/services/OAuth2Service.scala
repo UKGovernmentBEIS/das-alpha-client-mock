@@ -20,9 +20,9 @@ trait OAuth2Service {
   def refreshAccessToken(refreshToken: String): Future[Option[RefreshTokenResponse]]
 }
 
-class OAuth2ServiceImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit ec: ExecutionContext) extends OAuth2Service {
+class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) extends OAuth2Service {
 
-  import config._
+  import ServiceConfig.config._
 
   implicit val atrFormat = Json.format[AccessTokenResponse]
 
@@ -31,11 +31,11 @@ class OAuth2ServiceImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit 
       "grant_type" -> "authorization_code",
       "code" -> code,
       "redirect_uri" -> "http://localhost:9000/",
-      "client_id" -> clientId,
-      "client_secret" -> clientSecret
+      "client_id" -> client.id,
+      "client_secret" -> client.secret
     ).map { case (k, v) => k -> Seq(v) }
 
-    ws.url(accessTokenUri).post(params).map { response =>
+    ws.url(taxservice.accessTokenUri).post(params).map { response =>
       response.status match {
         case 200 => response.json.validate[AccessTokenResponse].get
 
@@ -54,11 +54,11 @@ class OAuth2ServiceImpl @Inject()(config: ServiceConfig, ws: WSClient)(implicit 
     val params = Map(
       "grant_type" -> "refresh_token",
       "refresh_token" -> refreshToken,
-      "client_id" -> clientId,
-      "client_secret" -> clientSecret
+      "client_id" -> client.id,
+      "client_secret" -> client.secret
     ).map { case (k, v) => k -> Seq(v) }
 
-    ws.url(accessTokenUri).post(params).map { response =>
+    ws.url(taxservice.accessTokenUri).post(params).map { response =>
       response.status match {
         case 200 => response.json.validate[RefreshTokenResponse].asOpt
 

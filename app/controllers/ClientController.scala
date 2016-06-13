@@ -13,9 +13,9 @@ import services.{OAuth2Service, ServiceConfig}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Service, users: DASUserOps, claims: SchemeClaimOps, UserAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
+class ClientController @Inject()(oAuth2Service: OAuth2Service, users: DASUserOps, claims: SchemeClaimOps, UserAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
 
-  import config._
+  import ServiceConfig.config._
 
   def unclaimed(claims: Seq[SchemeClaim], userId: Long): Constraint[String] = Constraint[String]("already claimed") { empref =>
     if (claims.exists(row => row.empref.trim() == empref.trim() && row.userId == userId)) Invalid(ValidationError(s"you have already claimed scheme $empref"))
@@ -52,11 +52,11 @@ class ClientController @Inject()(config: ServiceConfig, oAuth2Service: OAuth2Ser
 
   def startOauthDance(empref: String)(implicit request: RequestHeader): Future[Result] = {
     val params = Map(
-      "client_id" -> Seq(clientId),
-      "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL(useSSL)),
+      "client_id" -> Seq(client.id),
+      "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL(client.useSSL)),
       "scope" -> Seq("read:apprenticeship-levy openid enrolments")
     )
-    Future.successful(Redirect(authorizeSchemeUri, params).addingToSession("empref" -> empref))
+    Future.successful(Redirect(taxservice.authorizeSchemeUri, params).addingToSession("empref" -> empref))
   }
 
   def claimCallback(code: Option[String], state: Option[String]) = UserAction.async { implicit request =>

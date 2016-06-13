@@ -24,7 +24,6 @@
                     <tr>
                         <th>Month</th>
                         <th>Declared Levy</th>
-                        <th>English Fraction</th>
                         <th>Submission Type</th>
                         <th>Submission Date</th>
                     </tr>
@@ -33,8 +32,7 @@
                 @declarations.declarations.map { decl =>
                     <tr>
                         <td align="right">@decl.payrollMonth.month/@decl.payrollMonth.year</td>
-                        <td align="right">&pound;@decl.englishAmount</td>
-                        <td align="right">@decl.englishFraction.fraction</td>
+                        <td align="right">&pound;@decl.amount</td>
                         <td align="right">@decl.submissionType</td>
                         <td align="right">@decl.submissionDate</td>
                     </tr>

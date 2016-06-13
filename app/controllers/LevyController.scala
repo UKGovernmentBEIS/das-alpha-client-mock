@@ -6,11 +6,11 @@ import cats.data.Xor._
 import data.{SchemeClaim, SchemeClaimOps}
 import play.api.Logger
 import play.api.mvc._
-import services.{LevyApiService, OAuth2Service, ServiceConfig}
+import services.{LevyApiService, OAuth2Service}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class LevyController @Inject()(levyApi: LevyApiService, config: ServiceConfig, oAuth2Service: OAuth2Service, claims: SchemeClaimOps)(implicit ec: ExecutionContext) extends Controller {
+class LevyController @Inject()(levyApi: LevyApiService, oAuth2Service: OAuth2Service, claims: SchemeClaimOps)(implicit ec: ExecutionContext) extends Controller {
 
   def showEmpref(empref: String) = Action.async { implicit request =>
     claims.forEmpref(empref).flatMap {
