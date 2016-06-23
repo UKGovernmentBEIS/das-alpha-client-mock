@@ -30,7 +30,7 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
     val params = Map(
       "grant_type" -> "authorization_code",
       "code" -> code,
-      "redirect_uri" -> "http://localhost:9000/claim-callback",
+      "redirect_uri" -> taxservice.callbackURL,
       "client_id" -> client.id,
       "client_secret" -> client.secret
     ).map { case (k, v) => k -> Seq(v) }
@@ -43,7 +43,6 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
           Logger.warn("Request to exchange code for token failed")
           Logger.warn(s"Response is $s with body: '${response.body}'")
           throw new Exception(s"Request to exchange code for token failed with ${response.body}")
-
       }
     }
   }
