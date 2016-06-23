@@ -8,13 +8,13 @@ case class ApiConfig(host: String) {
   val baseURI = host + "/apprenticeship-levy/epaye"
 }
 
-case class TaxServiceConfig(baseURI: String) {
+case class TaxServiceConfig(baseURI: String, callbackURL: String) {
   val accessTokenUri = s"$baseURI/oauth/token"
   val authorizeSchemeUri = s"$baseURI/oauth/authorize"
 }
 
-
 object ServiceConfig {
+
   import pureconfig._
 
   lazy val config = loadConfig[ServiceConfig].get
