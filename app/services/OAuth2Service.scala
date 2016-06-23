@@ -30,7 +30,7 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
     val params = Map(
       "grant_type" -> "authorization_code",
       "code" -> code,
-      "redirect_uri" -> "http://localhost:9000/",
+      "redirect_uri" -> "http://localhost:9000/claim-callback",
       "client_id" -> client.id,
       "client_secret" -> client.secret
     ).map { case (k, v) => k -> Seq(v) }

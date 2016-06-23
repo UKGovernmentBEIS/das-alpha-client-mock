@@ -26,7 +26,7 @@ class LevyApiImpl @Inject()( ws: WSClient)(implicit ec: ExecutionContext) extend
   def declarations(empref: String, authToken: String)(implicit rh: RequestHeader): Future[Xor[String, LevyDeclarations]] = {
     val uri = config.api.baseURI + s"/${helper.urlEncode(empref)}/declarations"
 
-    ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken").get.map { response =>
+    ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken", "Accept" -> "application/vnd.hmrc.1.0+json").get.map { response =>
       response.status match {
         case 200 =>
           response.json.validate[LevyDeclarations].fold(

@@ -15,7 +15,6 @@ case class TaxServiceConfig(baseURI: String) {
 
 
 object ServiceConfig {
-
   import pureconfig._
 
   lazy val config = loadConfig[ServiceConfig].get

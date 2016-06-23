@@ -54,7 +54,8 @@ class ClientController @Inject()(oAuth2Service: OAuth2Service, users: DASUserOps
     val params = Map(
       "client_id" -> Seq(client.id),
       "redirect_uri" -> Seq(routes.ClientController.claimCallback(None, None).absoluteURL(client.useSSL)),
-      "scope" -> Seq("read:apprenticeship-levy openid enrolments")
+      "scope" -> Seq("read:apprenticeship-levy"),
+      "response_type" -> Seq("code")
     )
     Future.successful(Redirect(taxservice.authorizeSchemeUri, params).addingToSession("empref" -> empref))
   }
