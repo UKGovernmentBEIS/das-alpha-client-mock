@@ -20,14 +20,10 @@
 package tools
 
 import java.lang.reflect.UndeclaredThrowableException
+import java.math.BigInteger
 import java.security.GeneralSecurityException
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Date
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
-import java.math.BigInteger
-import java.util.TimeZone
 
 /**
   * This is an example implementation of the OATH
@@ -156,44 +152,5 @@ object TOTP {
         result = "0" + result
     }
     result
-  }
-
-  def main(args: Array[String]) {
-    // Seed for HMAC-SHA1 - 20 bytes
-    val seed: String = "3132333435363738393031323334353637383930"
-    // Seed for HMAC-SHA256 - 32 bytes
-    val seed32: String = "3132333435363738393031323334353637383930" + "313233343536373839303132"
-    // Seed for HMAC-SHA512 - 64 bytes
-    val seed64: String = "3132333435363738393031323334353637383930" + "3132333435363738393031323334353637383930" + "3132333435363738393031323334353637383930" + "31323334"
-    val T0: Long = 0
-    val X: Long = 30
-    val testTimes = Seq(59L, 1111111109L, 1111111111L, 1234567890L, 2000000000L, 20000000000L)
-    val df: DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-    df.setTimeZone(TimeZone.getTimeZone("UTC"))
-
-    try {
-      System.out.println("+---------------+-----------------------+" + "------------------+--------+--------+")
-      System.out.println("|  Time(sec)    |   Time (UTC format)   " + "| Value of T(Hex)  |  TOTP  | Mode   |")
-      System.out.println("+---------------+-----------------------+" + "------------------+--------+--------+")
-      testTimes.foreach { testTime =>
-        val T: Long = (testTime - T0) / X
-        var steps = T.toHexString.toUpperCase
-        while (steps.length < 16) {
-          steps = "0" + steps
-        }
-        val fmtTime = f"$testTime%11s"
-        val utcTime = df.format(new Date(testTime * 1000))
-        System.out.print("|  " + fmtTime + "  |  " + utcTime + "  | " + steps + " |")
-        System.out.println(generateTOTP(seed, steps, "8", "HmacSHA1") + "| SHA1   |")
-        System.out.print("|  " + fmtTime + "  |  " + utcTime + "  | " + steps + " |")
-        System.out.println(generateTOTP(seed32, steps, "8", "HmacSHA256") + "| SHA256 |")
-        System.out.print("|  " + fmtTime + "  |  " + utcTime + "  | " + steps + " |")
-        System.out.println(generateTOTP(seed64, steps, "8", "HmacSHA512") + "| SHA512 |")
-        System.out.println("+---------------+-----------------------+" + "------------------+--------+--------+")
-      }
-    }
-    catch {
-      case e: Exception => System.out.println("Error : " + e)
-    }
   }
 }
