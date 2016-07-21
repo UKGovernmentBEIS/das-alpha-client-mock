@@ -33,6 +33,11 @@ import javax.crypto.spec.SecretKeySpec
   * @author Johan Rydell, PortWise, Inc.
   */
 object TOTP {
+
+  implicit class StringSyntax(s: String) {
+    def prePad(n: Int, c: Char): String = s.reverse.padTo(n, c).reverse
+  }
+
   /**
     * This method uses the JCE to provide the crypto algorithm.
     * HMAC computes a Hashed Message Authentication Code with the
@@ -45,10 +50,8 @@ object TOTP {
     */
   private def hmac_sha(crypto: String, keyBytes: Array[Byte], text: Array[Byte]): Array[Byte] = {
     try {
-      var hmac: Mac = null
-      hmac = Mac.getInstance(crypto)
-      val macKey: SecretKeySpec = new SecretKeySpec(keyBytes, "RAW")
-      hmac.init(macKey)
+      val hmac = Mac.getInstance(crypto)
+      hmac.init(new SecretKeySpec(keyBytes, "RAW"))
       hmac.doFinal(text)
     }
     catch {
@@ -65,13 +68,7 @@ object TOTP {
   private def hexStr2Bytes(hex: String): Array[Byte] = {
     // Adding one byte to get the right conversion
     // Values starting with "0" can be converted
-    val bArray: Array[Byte] = new BigInteger("10" + hex, 16).toByteArray
-    // Copy all the REAL bytes, not the "first"
-    val ret: Array[Byte] = new Array[Byte](bArray.length - 1)
-    ret.indices.foreach { i =>
-      ret(i) = bArray(i + 1)
-    }
-    ret
+    new BigInteger("10" + hex, 16).toByteArray.drop(1)
   }
 
   private val DIGITS_POWER: Array[Int] = // 0 1  2   3    4     5      6       7        8
@@ -87,9 +84,8 @@ object TOTP {
     * @return a numeric String in base 10 that includes
     *         {truncationDigits} digits
     */
-  def generateTOTP(key: String, time: String, returnDigits: String): String = {
-    generateTOTP(key, time, returnDigits, "HmacSHA1")
-  }
+  def generateTOTP(key: String, time: String, returnDigits: Int): String =
+  generateTOTP(key, time, returnDigits, "HmacSHA1")
 
   /**
     * This method generates a TOTP value for the given
@@ -101,9 +97,8 @@ object TOTP {
     * @return a numeric String in base 10 that includes
     *         {truncationDigits} digits
     */
-  def generateTOTP256(key: String, time: String, returnDigits: String): String = {
-    generateTOTP(key, time, returnDigits, "HmacSHA256")
-  }
+  def generateTOTP256(key: String, time: String, returnDigits: Int): String =
+  generateTOTP(key, time, returnDigits, "HmacSHA256")
 
   /**
     * This method generates a TOTP value for the given
@@ -115,9 +110,8 @@ object TOTP {
     * @return a numeric String in base 10 that includes
     *         {truncationDigits} digits
     */
-  def generateTOTP512(key: String, time: String, returnDigits: String): String = {
-    generateTOTP(key, time, returnDigits, "HmacSHA512")
-  }
+  def generateTOTP512(key: String, time: String, returnDigits: Int): String =
+  generateTOTP(key, time, returnDigits, "HmacSHA512")
 
   /**
     * This method generates a TOTP value for the given
@@ -130,27 +124,13 @@ object TOTP {
     * @return a numeric String in base 10 that includes
     *         {truncationDigits} digits
     */
-  def generateTOTP(key: String, time: String, returnDigits: String, crypto: String): String = {
-    val codeDigits: Int = Integer.decode(returnDigits)
-    var result: String = null
-    // Using the counter
-    // First 8 bytes are for the movingFactor
-    // Compliant with base RFC 4226 (HOTP)
-    var paddedTime = time
-    while (paddedTime.length < 16) paddedTime = "0" + paddedTime
-
-    // Get the HEX in a Byte[]
-    val msg: Array[Byte] = hexStr2Bytes(time)
-    val k: Array[Byte] = hexStr2Bytes(key)
-    val hash: Array[Byte] = hmac_sha(crypto, k, msg)
+  def generateTOTP(key: String, time: String, returnDigits: Int, crypto: String): String = {
+    val hash = hmac_sha(crypto, hexStr2Bytes(key), hexStr2Bytes(time.prePad(16, '0')))
     // put selected bytes into result int
-    val offset: Int = hash(hash.length - 1) & 0xf
-    val binary: Int = ((hash(offset) & 0x7f) << 24) | ((hash(offset + 1) & 0xff) << 16) | ((hash(offset + 2) & 0xff) << 8) | (hash(offset + 3) & 0xff)
-    val otp: Int = binary % DIGITS_POWER(codeDigits)
-    result = Integer.toString(otp)
-    while (result.length < codeDigits) {
-        result = "0" + result
-    }
-    result
+    val offset = hash(hash.length - 1) & 0xf
+    val binary = ((hash(offset) & 0x7f) << 24) | ((hash(offset + 1) & 0xff) << 16) | ((hash(offset + 2) & 0xff) << 8) | (hash(offset + 3) & 0xff)
+    val otp = binary % DIGITS_POWER(returnDigits)
+
+    Integer.toString(otp).prePad(returnDigits, '0')
   }
 }

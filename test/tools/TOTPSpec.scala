@@ -28,14 +28,12 @@ class TOTPSpec extends WordSpecLike with Matchers {
     "generate correct values" in {
       testTimes.foreach { case (testTime, expected) =>
         val T: Long = (testTime - T0) / X
-        var steps = T.toHexString.toUpperCase
-        while (steps.length < 16) {
-          steps = "0" + steps
-        }
+        val steps = T.toHexString.toUpperCase
+
         val fmtTime = f"$testTime%11s"
-        val totpSHA1 = generateTOTP(seed, steps, "8", "HmacSHA1")
-        val totpSHA256 = generateTOTP(seed32, steps, "8", "HmacSHA256")
-        val totpSHA512 = generateTOTP(seed64, steps, "8", "HmacSHA512")
+        val totpSHA1 = generateTOTP(seed, steps, 8, "HmacSHA1")
+        val totpSHA256 = generateTOTP(seed32, steps, 8, "HmacSHA256")
+        val totpSHA512 = generateTOTP(seed64, steps, 8, "HmacSHA512")
 
         Seq(totpSHA1, totpSHA256, totpSHA512) shouldBe expected.map(i => f"$i%08d")
       }
