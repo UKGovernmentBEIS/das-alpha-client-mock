@@ -23,9 +23,11 @@ class ClientController @Inject()(oAuth2Service: OAuth2Service, users: DASUserOps
 
     def claimedByUser(claim: SchemeClaim): Boolean = alreadyClaimed(claim) && claim.userId == userId
 
-    if (claims.exists(claimedByUser)) Invalid(ValidationError(s"you have already claimed scheme $empref"))
-    else if (claims.exists(alreadyClaimed)) Invalid(ValidationError(s"another user has already claimed scheme $empref"))
-    else Valid
+    empref match {
+      case _ if claims.exists(claimedByUser) => Invalid(ValidationError(s"you have already claimed scheme $empref"))
+      case _ if claims.exists(alreadyClaimed) => Invalid(ValidationError(s"another user has already claimed scheme $empref"))
+      case _ => Valid
+    }
   }
 
   def claimMapping(claimedSchemes: Seq[SchemeClaim], userId: Long) = Form("empref" -> nonEmptyText.verifying(unclaimed(claimedSchemes, userId)))
