@@ -1,10 +1,10 @@
 name := "das-alpha-client-mock"
 
-enablePlugins(PlayScala)
-
-enablePlugins(GitVersioning)
-
-enablePlugins(GitBranchPrompt)
+lazy val `das-alpha-client-mock` = (project in file("."))
+  .enablePlugins(PlayScala)
+  .disablePlugins(PlayLayoutPlugin)
+  .enablePlugins(GitVersioning)
+  .enablePlugins(GitBranchPrompt)
 
 git.useGitDescribe := true
 

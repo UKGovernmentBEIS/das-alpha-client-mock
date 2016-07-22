@@ -1,7 +1,3 @@
 machine:
   java:
     version: openjdk8
-
-dependencies:
-  override:
-    - sbt update
