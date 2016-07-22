@@ -3,9 +3,5 @@ machine:
     version: openjdk8
 
 dependencies:
-  pre:
-    - wget -q https://dl.bintray.com/sbt/debian/sbt-0.13.11.deb
-    - sudo dpkg -i sbt-0.13.11.deb
-  cache_directories:
-    - "~/.ivy2"
-    - "~/.sbt"
+  override:
+    - sbt update
