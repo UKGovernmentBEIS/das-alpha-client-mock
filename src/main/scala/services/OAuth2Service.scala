@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import com.google.inject.ImplementedBy
 import play.api.Logger
-import play.api.libs.json.Json
+import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,7 +37,10 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
 
     ws.url(taxservice.accessTokenUri).post(params).map { response =>
       response.status match {
-        case 200 => response.json.validate[AccessTokenResponse].get
+        case 200 => response.json.validate[AccessTokenResponse] match {
+          case JsSuccess(resp, _) => resp
+          case JsError(errs) => throw new Exception(s"could not decode token response: $errs")
+        }
 
         case s =>
           Logger.warn("Request to exchange code for token failed")

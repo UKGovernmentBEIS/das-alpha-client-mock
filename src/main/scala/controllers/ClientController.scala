@@ -13,7 +13,7 @@ import services.{OAuth2Service, ServiceConfig}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ClientController @Inject()(oAuth2Service: OAuth2Service, users: DASUserOps, claims: SchemeClaimOps, UserAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
+class ClientController @Inject()(oAuth2Service: OAuth2Service, users: DASUserOps, claims: SchemeClaimOps, userAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
 
   import ServiceConfig.config._
 
@@ -29,13 +29,13 @@ class ClientController @Inject()(oAuth2Service: OAuth2Service, users: DASUserOps
     Redirect(controllers.routes.ClientController.showClaimScheme())
   }
 
-  def showClaimScheme = UserAction.async { request =>
+  def showClaimScheme = userAction.async { request =>
     claims.forUser(request.user.id).map { claimedSchemes =>
       Ok(views.html.claimScheme(claimMapping(claimedSchemes, request.user.id), request.user, claimedSchemes))
     }
   }
 
-  def claimScheme = UserAction.async { implicit request =>
+  def claimScheme = userAction.async { implicit request =>
     claims.all().flatMap { allClaims =>
       claimMapping(allClaims, request.user.id).bindFromRequest().fold(
         formWithErrors => Future.successful(Ok(views.html.claimScheme(formWithErrors, request.user, allClaims.filter(_.userId == request.user.id)))),
@@ -44,7 +44,7 @@ class ClientController @Inject()(oAuth2Service: OAuth2Service, users: DASUserOps
     }
   }
 
-  def removeScheme(empref: String) = UserAction.async { implicit request =>
+  def removeScheme(empref: String) = userAction.async { implicit request =>
     claims.removeClaimForUser(empref, request.user.id).map { count =>
       Redirect(controllers.routes.ClientController.index())
     }
@@ -60,7 +60,7 @@ class ClientController @Inject()(oAuth2Service: OAuth2Service, users: DASUserOps
     Future.successful(Redirect(taxservice.authorizeSchemeUri, params).addingToSession("empref" -> empref))
   }
 
-  def claimCallback(code: Option[String], state: Option[String]) = UserAction.async { implicit request =>
+  def claimCallback(code: Option[String], state: Option[String]) = userAction.async { implicit request =>
     val redirectToIndex = Redirect(controllers.routes.ClientController.index())
 
     request.session.get("empref").map { empref =>

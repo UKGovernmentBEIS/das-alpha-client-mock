@@ -1,5 +1,7 @@
 package services
 
+import scala.util.{Failure, Success}
+
 case class ServiceConfig(taxservice: TaxServiceConfig, api: ApiConfig, client: ClientConfig)
 
 case class ClientConfig(id: String, secret: String, useSSL: Boolean)
@@ -17,5 +19,8 @@ object ServiceConfig {
 
   import pureconfig._
 
-  lazy val config = loadConfig[ServiceConfig].get
+  lazy val config = loadConfig[ServiceConfig] match {
+    case Success(c) => c
+    case Failure(t) => throw t
+  }
 }

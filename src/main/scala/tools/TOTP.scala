@@ -25,6 +25,8 @@ import java.security.GeneralSecurityException
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
+import scala.util.{Failure, Try}
+
 /**
   * This is an example implementation of the OATH
   * TOTP algorithm.
@@ -49,14 +51,9 @@ object TOTP {
     * @param text     :     the message or text to be authenticated
     */
   private def hmac_sha(crypto: String, keyBytes: Array[Byte], text: Array[Byte]): Array[Byte] = {
-    try {
-      val hmac = Mac.getInstance(crypto)
-      hmac.init(new SecretKeySpec(keyBytes, "RAW"))
-      hmac.doFinal(text)
-    }
-    catch {
-      case gse: GeneralSecurityException => throw new UndeclaredThrowableException(gse)
-    }
+    val hmac = Mac.getInstance(crypto)
+    hmac.init(new SecretKeySpec(keyBytes, "RAW"))
+    hmac.doFinal(text)
   }
 
   /**
@@ -84,8 +81,8 @@ object TOTP {
     * @return a numeric String in base 10 that includes
     *         {truncationDigits} digits
     */
-  def generateTOTP(key: String, time: String, returnDigits: Int): String =
-  generateTOTP(key, time, returnDigits, "HmacSHA1")
+  def generate(key: String, time: String, returnDigits: Int): String =
+  generate(key, time, returnDigits, "HmacSHA1")
 
   /**
     * This method generates a TOTP value for the given
@@ -97,8 +94,8 @@ object TOTP {
     * @return a numeric String in base 10 that includes
     *         {truncationDigits} digits
     */
-  def generateTOTP256(key: String, time: String, returnDigits: Int): String =
-  generateTOTP(key, time, returnDigits, "HmacSHA256")
+  def generate256(key: String, time: String, returnDigits: Int): String =
+  generate(key, time, returnDigits, "HmacSHA256")
 
   /**
     * This method generates a TOTP value for the given
@@ -110,8 +107,8 @@ object TOTP {
     * @return a numeric String in base 10 that includes
     *         {truncationDigits} digits
     */
-  def generateTOTP512(key: String, time: String, returnDigits: Int): String =
-  generateTOTP(key, time, returnDigits, "HmacSHA512")
+  def generate512(key: String, time: String, returnDigits: Int): String =
+  generate(key, time, returnDigits, "HmacSHA512")
 
   /**
     * This method generates a TOTP value for the given
@@ -124,7 +121,7 @@ object TOTP {
     * @return a numeric String in base 10 that includes
     *         {truncationDigits} digits
     */
-  def generateTOTP(key: String, time: String, returnDigits: Int, crypto: String): String = {
+  def generate(key: String, time: String, returnDigits: Int, crypto: String): String = {
     val hash = hmac_sha(crypto, hexStr2Bytes(key), hexStr2Bytes(time.prePad(16, '0')))
     // put selected bytes into result int
     val offset = hash(hash.length - 1) & 0xf

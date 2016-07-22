@@ -11,7 +11,7 @@ trait DASUserModule extends SlickModule {
 
   import driver.api._
 
-  val DASUsers = TableQuery[DASUserTable]
+  val dasUsers = TableQuery[DASUserTable]
 
   class DASUserTable(tag: Tag) extends Table[DASUser](tag, "das_user") {
 
@@ -32,10 +32,10 @@ class DASUserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvide
   import driver.api._
 
   override def validate(username: String, password: String): Future[Option[DASUser]] = db.run {
-    DASUsers.filter(u => u.name === username && u.password === password).result.headOption
+    dasUsers.filter(u => u.name === username && u.password === password).result.headOption
   }
 
-  override def byId(id: Long): Future[Option[DASUser]] = db.run(DASUsers.filter(_.id === id).result.headOption)
+  override def byId(id: Long): Future[Option[DASUser]] = db.run(dasUsers.filter(_.id === id).result.headOption)
 
-  override def byName(s: String): Future[Option[DASUser]] = db.run(DASUsers.filter(u => u.name === s).result.headOption)
+  override def byName(s: String): Future[Option[DASUser]] = db.run(dasUsers.filter(u => u.name === s).result.headOption)
 }

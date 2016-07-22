@@ -11,7 +11,7 @@ trait SchemeClaimModule extends SlickModule {
 
   import driver.api._
 
-  val SchemeClaims = TableQuery[SchemeClaimTable]
+  val schemeClaims = TableQuery[SchemeClaimTable]
 
   class SchemeClaimTable(tag: Tag) extends Table[SchemeClaim](tag, "scheme_claim") {
 
@@ -28,7 +28,7 @@ trait SchemeClaimModule extends SlickModule {
     def * = (empref, dasUserId, accessToken, validUntil, refreshToken) <>(SchemeClaim.tupled, SchemeClaim.unapply)
   }
 
-  def schema = SchemeClaims.schema
+  def schema = schemeClaims.schema
 
 }
 
@@ -38,27 +38,27 @@ class SchemeClaimDAO @Inject()(protected val dbConfigProvider: DatabaseConfigPro
 
   import driver.api._
 
-  def all(): Future[Seq[SchemeClaim]] = db.run(SchemeClaims.result)
+  def all(): Future[Seq[SchemeClaim]] = db.run(schemeClaims.result)
 
-  def forUser(userId: Long): Future[Seq[SchemeClaim]] = db.run(SchemeClaims.filter(_.dasUserId === userId).result)
+  def forUser(userId: Long): Future[Seq[SchemeClaim]] = db.run(schemeClaims.filter(_.dasUserId === userId).result)
 
-  def forEmpref(empref: String): Future[Option[SchemeClaim]] = db.run(SchemeClaims.filter(_.empref === empref).result.headOption)
+  def forEmpref(empref: String): Future[Option[SchemeClaim]] = db.run(schemeClaims.filter(_.empref === empref).result.headOption)
 
   def updateClaim(row: SchemeClaim): Future[Int] = db.run {
-    SchemeClaims.filter(_.empref === row.empref).update(row)
+    schemeClaims.filter(_.empref === row.empref).update(row)
   }
 
   def removeClaimForUser(empref: String, userId: Long): Future[Int] = db.run {
-    SchemeClaims.filter(sc => sc.empref === empref && sc.dasUserId === userId).delete
+    schemeClaims.filter(sc => sc.empref === empref && sc.dasUserId === userId).delete
   }
 
-  def removeAllClaimsForUser(userId: Long): Future[Int] = db.run(SchemeClaims.filter(_.dasUserId === userId).delete)
+  def removeAllClaimsForUser(userId: Long): Future[Int] = db.run(schemeClaims.filter(_.dasUserId === userId).delete)
 
-  def insert(cat: SchemeClaim): Future[Unit] = db.run(SchemeClaims += cat).map { _ => () }
+  def insert(cat: SchemeClaim): Future[Unit] = db.run(schemeClaims += cat).map { _ => () }
 
   override def expireToken(token: String): Future[Int] = db.run {
     val q = for {
-      c <- SchemeClaims if c.accessToken === token
+      c <- schemeClaims if c.accessToken === token
     } yield c.validUntil
 
     q.update(System.currentTimeMillis())

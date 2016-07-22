@@ -4,7 +4,7 @@ import org.scalatest.{Matchers, WordSpecLike}
 
 class TOTPSpec extends WordSpecLike with Matchers {
 
-  import TOTP.generateTOTP
+  import TOTP.generate
 
   val testTimes = Seq(
     59L -> Seq(94287082, 46119246, 90693936),
@@ -31,9 +31,9 @@ class TOTPSpec extends WordSpecLike with Matchers {
         val steps = T.toHexString.toUpperCase
 
         val fmtTime = f"$testTime%11s"
-        val totpSHA1 = generateTOTP(seed, steps, 8, "HmacSHA1")
-        val totpSHA256 = generateTOTP(seed32, steps, 8, "HmacSHA256")
-        val totpSHA512 = generateTOTP(seed64, steps, 8, "HmacSHA512")
+        val totpSHA1 = generate(seed, steps, 8, "HmacSHA1")
+        val totpSHA256 = generate(seed32, steps, 8, "HmacSHA256")
+        val totpSHA512 = generate(seed64, steps, 8, "HmacSHA512")
 
         Seq(totpSHA1, totpSHA256, totpSHA512) shouldBe expected.map(i => f"$i%08d")
       }

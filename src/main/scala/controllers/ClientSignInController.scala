@@ -13,7 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
 case class ClientUserData(name: String, password: String)
 
 @Singleton
-class ClientSignInController @Inject()(dasUserDAO: DASUserOps, UserAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
+class ClientSignInController @Inject()(dasUserDAO: DASUserOps, userAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
 
   val signInForm = Form(
     mapping(
@@ -31,7 +31,7 @@ class ClientSignInController @Inject()(dasUserDAO: DASUserOps, UserAction: Clien
       formWithErrors => Future.successful(BadRequest(views.html.signin(formWithErrors))),
       userData => {
         dasUserDAO.validate(userData.name, userData.password).map {
-          case Some(user) => Redirect(controllers.routes.ClientController.index()).addingToSession(UserAction.sessionKey -> user.id.toString)
+          case Some(user) => Redirect(controllers.routes.ClientController.index()).addingToSession(userAction.sessionKey -> user.id.toString)
           case None => Ok(views.html.signin(signInForm.withError("username", "Bad user name or password")))
         }
       }
