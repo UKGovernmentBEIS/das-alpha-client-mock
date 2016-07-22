@@ -24,16 +24,23 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
 
   import ServiceConfig.config._
 
+  val clientDetails = Map(
+    "client_id" -> client.id,
+    "client_secret" -> client.secret
+  )
+
   implicit val atrFormat = Json.format[AccessTokenResponse]
 
+  def mkParams(ps: (String, String)*): Map[String, Seq[String]] = {
+    (clientDetails ++ ps).map { case (k, v) => k -> Seq(v) }
+  }
+
   def convertCode(code: String, userId: Long, empref: String): Future[AccessTokenResponse] = {
-    val params = Map(
+    val params = mkParams(
       "grant_type" -> "authorization_code",
       "code" -> code,
-      "redirect_uri" -> taxservice.callbackURL,
-      "client_id" -> client.id,
-      "client_secret" -> client.secret
-    ).map { case (k, v) => k -> Seq(v) }
+      "redirect_uri" -> taxservice.callbackURL
+    )
 
     ws.url(taxservice.accessTokenUri).post(params).map { response =>
       response.status match {
@@ -53,12 +60,10 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
   implicit val rtrFormat = Json.format[RefreshTokenResponse]
 
   def refreshAccessToken(refreshToken: String): Future[Option[RefreshTokenResponse]] = {
-    val params = Map(
+    val params = mkParams(
       "grant_type" -> "refresh_token",
-      "refresh_token" -> refreshToken,
-      "client_id" -> client.id,
-      "client_secret" -> client.secret
-    ).map { case (k, v) => k -> Seq(v) }
+      "refresh_token" -> refreshToken
+    )
 
     ws.url(taxservice.accessTokenUri).post(params).map { response =>
       response.status match {
