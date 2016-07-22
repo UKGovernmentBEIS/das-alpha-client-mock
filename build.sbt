@@ -1,7 +1,9 @@
-name := """das-alpha-client-mock"""
+name := "das-alpha-client-mock"
 
 enablePlugins(PlayScala)
+
 enablePlugins(GitVersioning)
+
 enablePlugins(GitBranchPrompt)
 
 git.useGitDescribe := true
@@ -15,7 +17,6 @@ PlayKeys.devSettings := Seq("play.server.http.port" -> "9000")
 resolvers += Resolver.bintrayRepo("hmrc", "releases")
 
 libraryDependencies ++= Seq(
-  cache,
   ws,
   "joda-time" % "joda-time" % "2.7",
   "org.joda" % "joda-convert" % "1.7",
