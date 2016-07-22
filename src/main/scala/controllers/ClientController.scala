@@ -17,9 +17,14 @@ class ClientController @Inject()(oAuth2Service: OAuth2Service, users: DASUserOps
 
   import ServiceConfig.config._
 
+
   def unclaimed(claims: Seq[SchemeClaim], userId: Long): Constraint[String] = Constraint[String]("already claimed") { empref =>
-    if (claims.exists(row => row.empref.trim() == empref.trim() && row.userId == userId)) Invalid(ValidationError(s"you have already claimed scheme $empref"))
-    else if (claims.exists(row => row.empref.trim() == empref.trim())) Invalid(ValidationError(s"another user has already claimed scheme $empref"))
+    def alreadyClaimed(claim: SchemeClaim): Boolean = claim.empref.trim() == empref.trim()
+
+    def claimedByUser(claim: SchemeClaim): Boolean = alreadyClaimed(claim) && claim.userId == userId
+
+    if (claims.exists(claimedByUser)) Invalid(ValidationError(s"you have already claimed scheme $empref"))
+    else if (claims.exists(alreadyClaimed)) Invalid(ValidationError(s"another user has already claimed scheme $empref"))
     else Valid
   }
 
