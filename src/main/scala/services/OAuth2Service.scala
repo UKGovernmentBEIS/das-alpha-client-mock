@@ -5,7 +5,7 @@ import javax.inject.Inject
 import com.google.inject.ImplementedBy
 import play.api.Logger
 import play.api.libs.json.{JsError, JsSuccess, Json}
-import play.api.libs.ws.WSClient
+import play.api.libs.ws.{WSClient, WSResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,9 +31,11 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
 
   implicit val atrFormat = Json.format[AccessTokenResponse]
 
-  def mkParams(ps: (String, String)*): Map[String, Seq[String]] = {
+  private[services] def mkParams(ps: (String, String)*): Map[String, Seq[String]] =
     (clientDetails ++ ps).map { case (k, v) => k -> Seq(v) }
-  }
+
+  private[services] def call(params: Map[String, Seq[String]]): Future[WSResponse] =
+    ws.url(taxservice.accessTokenUri).post(params)
 
   def convertCode(code: String, userId: Long, empref: String): Future[AccessTokenResponse] = {
     val params = mkParams(
@@ -42,7 +44,7 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
       "redirect_uri" -> taxservice.callbackURL
     )
 
-    ws.url(taxservice.accessTokenUri).post(params).map { response =>
+    call(params).map { response =>
       response.status match {
         case 200 => response.json.validate[AccessTokenResponse] match {
           case JsSuccess(resp, _) => resp
@@ -65,14 +67,19 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
       "refresh_token" -> refreshToken
     )
 
-    ws.url(taxservice.accessTokenUri).post(params).map { response =>
+    call(params).map { response =>
       response.status match {
         case 200 => response.json.validate[RefreshTokenResponse].asOpt
 
+        case 400 => None
+
         case s =>
-          Logger.error(response.body)
-          None
+          Logger.warn("Request to refresh access token failed")
+          Logger.warn(s"Response is $s with body: '${response.body}'")
+          throw new Exception(s"Request to refresh access token failed with ${response.body}")
       }
     }
   }
+
+
 }
