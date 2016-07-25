@@ -16,7 +16,7 @@ GET         /levy-declarations         controllers.LevyController.showEmpref(emp
 GET         /claim-scheme              controllers.ClientController.showClaimScheme
 POST        /claim-scheme              controllers.ClientController.claimScheme
 GET         /remove-scheme             controllers.ClientController.removeScheme(empref:String)
-GET         /claim-callback            controllers.ClientController.claimCallback(code:Option[String], state:Option[String])
+GET         /claim-callback            controllers.OAuth2Controller.claimCallback(code:Option[String], state:Option[String])
 
 GET         /admin                     controllers.AdminController.index()
 GET         /admin/expire-token        controllers.AdminController.expireToken(token:String)
