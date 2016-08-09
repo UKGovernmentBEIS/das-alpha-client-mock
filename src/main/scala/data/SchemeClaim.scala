@@ -1,6 +1,5 @@
 package data
 
-import com.google.inject.ImplementedBy
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
