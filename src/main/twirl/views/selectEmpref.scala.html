@@ -1,0 +1,36 @@
+@import data.DASUser
+@(user: DASUser, emprefs: Seq[String])
+
+    @proposition = {
+        <div class="header-proposition">
+            <div class="content">
+                <nav id="proposition-menu" class="header__menu" role="navigation">
+                    <span class="header__menu__proposition-name">Digital Apprenticeship Service</span>
+
+                    <ul id="proposition-links" class="header__menu__proposition-links">
+                        <li><a href="@controllers.routes.AdminController.index()">Admin</a></li>
+                        <li><a id="logOutNavHref" href="@controllers.routes.ClientSignInController.signOut()" data-journey-click="primary-navigation:Click:Sign out">
+                            Sign out</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    }
+
+    @main("Welcome to DAS", insideHeader = proposition) {
+        <div>
+            <span>Logged in as @user.name</span>
+            <div>
+
+            </div>
+            <div>
+                <h3>Claim a scheme</h3>
+                <ul>
+                @emprefs.map { empref =>
+                  <li>@empref</li>
+                }
+                </ul>
+            </div>
+        </div>
+
+    }

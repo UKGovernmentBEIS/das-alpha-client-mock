@@ -7,7 +7,7 @@ case class ServiceConfig(taxservice: TaxServiceConfig, api: ApiConfig, client: C
 case class ClientConfig(id: String, secret: String, useSSL: Boolean)
 
 case class ApiConfig(host: String) {
-  val baseURI = host + "/apprenticeship-levy/epaye"
+  val baseURI = host + "/sandbox"
 }
 
 case class TaxServiceConfig(baseURI: String, callbackURL: String) {

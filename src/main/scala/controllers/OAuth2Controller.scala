@@ -2,14 +2,18 @@ package controllers
 
 import javax.inject.Inject
 
-import actions.ClientUserAction
+import actions.{ClientUserAction, ClientUserRequest}
+import cats.data.Xor
+import cats.syntax.xor._
+import cats.data.Xor.{Left, Right}
 import data.{SchemeClaim, SchemeClaimOps}
 import play.api.mvc._
-import services.OAuth2Service
 import services.ServiceConfig.config
+import services.{LevyApiService, OAuth2Service}
 
 import scala.concurrent.{ExecutionContext, Future}
-class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, claims: SchemeClaimOps, userAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
+
+class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, api: LevyApiService, claims: SchemeClaimOps, userAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
 
   def startOauthDance(empref: String)(implicit request: RequestHeader): Future[Result] = {
     val params = Map(
@@ -21,21 +25,30 @@ class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, claims: SchemeCla
     Future.successful(Redirect(config.taxservice.authorizeSchemeUri, params).addingToSession("empref" -> empref))
   }
 
+  case class AccessTokenDetails(accessToken: String, validUntil: Long, refreshToken: String)
+
   def claimCallback(code: Option[String], state: Option[String]) = userAction.async { implicit request =>
     val redirectToIndex = Redirect(controllers.routes.ClientController.index())
 
-    request.session.get("empref").map { empref =>
-      code match {
-        case None => Future.successful(redirectToIndex)
-        case Some(c) => for {
-          atr <- oAuth2Service.convertCode(c, request.user.id, empref)
-          validUntil = System.currentTimeMillis() + (atr.expires_in * 1000)
-          scr = SchemeClaim(empref, request.user.id, atr.access_token, validUntil, atr.refresh_token)
-          _ <- claims.insert(scr)
-        } yield redirectToIndex
+    val atd: Xor[Future[Result], Future[AccessTokenDetails]] = code match {
+      case None => Left(Future.successful(BadRequest("No oAuth code")))
+      case Some(c) => convertCodeToToken(request, c).right
+    }
+
+    atd.map { fd =>
+      for {
+        d <- fd
+        response <- api.root(d.accessToken)
+      } yield response match {
+        case Left(err) => BadRequest(err)
+        case Right(emprefs) => Ok(views.html.selectEmpref(request.user, emprefs.emprefs))
       }
-    }.getOrElse(Future.successful(BadRequest("no 'empref' was present in session")))
+    }.merge
   }
 
+  def convertCodeToToken(request: ClientUserRequest[_], c: String): Future[AccessTokenDetails] = for {
+    atr <- oAuth2Service.convertCode(c, request.user.id)
+    validUntil = System.currentTimeMillis() + (atr.expires_in * 1000)
+  } yield AccessTokenDetails(atr.access_token, validUntil, atr.refresh_token)
 }
 
