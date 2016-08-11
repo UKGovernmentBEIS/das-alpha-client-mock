@@ -15,7 +15,7 @@ case class RefreshTokenResponse(access_token: String, expires_in: Long)
 
 @ImplementedBy(classOf[OAuth2ServiceImpl])
 trait OAuth2Service {
-  def convertCode(code: String, userId: Long): Future[AccessTokenResponse]
+  def convertCode(code: String): Future[AccessTokenResponse]
 
   def refreshAccessToken(refreshToken: String): Future[Option[RefreshTokenResponse]]
 }
@@ -37,7 +37,7 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
   private[services] def call(params: Map[String, Seq[String]]): Future[WSResponse] =
     ws.url(taxservice.accessTokenUri).post(params)
 
-  def convertCode(code: String, userId: Long): Future[AccessTokenResponse] = {
+  def convertCode(code: String): Future[AccessTokenResponse] = {
     val params = mkParams(
       "grant_type" -> "authorization_code",
       "code" -> code,

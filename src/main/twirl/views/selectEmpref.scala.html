@@ -1,5 +1,5 @@
 @import data.DASUser
-@(user: DASUser, emprefs: Seq[String], tokenDetailsId: Long)
+@(user: DASUser, statuses: Seq[SchemeStatus], tokenDetailsId: Long)
 
     @proposition = {
         <div class="header-proposition">
@@ -26,8 +26,14 @@
             <div>
                 <h3>Claim a scheme</h3>
                 <ul>
-                @emprefs.map { empref =>
-                  <li>@empref</li>
+                @statuses.map { s =>
+                  <li>
+                      @{s match {
+                          case Unclaimed(empref) => empref
+                          case UserClaimed(empref) => s"$empref - you have already claimed this"
+                          case OtherClaimed(empref) => s"$empref - someone else has already claimed this"
+                      }}
+                  </li>
                 }
                 </ul>
             </div>

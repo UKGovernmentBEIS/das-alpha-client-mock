@@ -4,6 +4,7 @@ import javax.inject.Inject
 
 import actions.ClientUserAction
 import data.{SchemeClaim, SchemeClaimOps}
+import models.Emprefs
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation._
@@ -42,6 +43,20 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
         formWithErrors => Future.successful(Ok(views.html.claimScheme(formWithErrors, request.user, allClaims.filter(_.userId == request.user.id)))),
         empref => oauth2Controller.startOauthDance(empref)
       )
+    }
+  }
+
+  def selectSchemes(ref: Long) = userAction.async { implicit request =>
+    ???
+  }
+
+  def checkStatuses(userId: Long, emprefs: Seq[String]): Future[Seq[SchemeStatus]] = Future.sequence {
+    emprefs.map { empref =>
+      claims.forEmpref(empref) map {
+        case None => Unclaimed(empref)
+        case Some(claim) if claim.userId == userId => UserClaimed(empref)
+        case Some(claim) => OtherClaimed(empref)
+      }
     }
   }
 

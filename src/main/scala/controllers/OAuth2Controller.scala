@@ -2,11 +2,13 @@ package controllers
 
 import javax.inject.Inject
 
-import actions.{ClientUserAction, ClientUserRequest}
-import cats.data.Xor
+import actions.ClientUserAction
 import cats.data.Xor.{Left, Right}
+import cats.data.{Xor, XorT}
+import cats.std.future._
 import cats.syntax.xor._
-import data.{AccessTokenDetails, TransientAccessTokenOps}
+import data.{SchemeClaimOps, StashedTokenDetails, TransientAccessTokenOps}
+import models.Emprefs
 import play.api.mvc._
 import services.ServiceConfig.config
 import services.{LevyApiService, OAuth2Service}
@@ -14,7 +16,7 @@ import services.{LevyApiService, OAuth2Service}
 import scala.concurrent.{ExecutionContext, Future}
 
 
-class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: TransientAccessTokenOps, api: LevyApiService, userAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
+class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: TransientAccessTokenOps, schemes: SchemeClaimOps, api: LevyApiService, userAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
 
   def startOauthDance(empref: String)(implicit request: RequestHeader): Future[Result] = {
     val params = Map(
@@ -26,30 +28,32 @@ class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: Tra
     Future.successful(Redirect(config.taxservice.authorizeSchemeUri, params).addingToSession("empref" -> empref))
   }
 
+  case class TokenDetails(accessToken: String, validUntil: Long, refreshToken: String)
 
   def claimCallback(code: Option[String], state: Option[String]) = userAction.async { implicit request =>
     val redirectToIndex = Redirect(controllers.routes.ClientController.index())
 
-    val atd: Xor[Future[Result], Future[AccessTokenDetails]] = code match {
-      case None => Left(Future.successful(BadRequest("No oAuth code")))
-      case Some(c) => convertCodeToToken(request, c).right
+    val atd: Future[Xor[Result, TokenDetails]] = code match {
+      case None => Future.successful(Left(BadRequest("No oAuth code")))
+      case Some(c) => convertCodeToToken(c).map(_.right)
     }
 
-    atd.map { fd =>
-      for {
-        d <- fd
-        tokenDetailsId <- accessTokens.stash(d)
-        response <- api.root(d.accessToken)
-      } yield response match {
-        case Left(err) => BadRequest(err)
-        case Right(emprefs) => Ok(views.html.selectEmpref(request.user, emprefs.emprefs, tokenDetailsId))
-      }
-    }.merge
+    val refx = for {
+      td <- XorT(atd)
+      emprefs <- XorT(api.root(td.accessToken).map(r => r.leftMap(BadRequest(_))))
+      ds = emprefs.emprefs.map(StashedTokenDetails(_, td.accessToken, td.validUntil, td.refreshToken, request.user.id))
+      ref <- XorT[Future, Result, Long](accessTokens.stash(ds).map(_.right))
+    } yield ref
+
+    refx.value.map {
+      case Left(result) => result
+      case Right(ref) => Redirect(controllers.routes.ClientController.selectSchemes(ref))
+    }
   }
 
-  def convertCodeToToken(request: ClientUserRequest[_], c: String): Future[AccessTokenDetails] = for {
-    atr <- oAuth2Service.convertCode(c, request.user.id)
+  def convertCodeToToken(c: String): Future[TokenDetails] = for {
+    atr <- oAuth2Service.convertCode(c)
     validUntil = System.currentTimeMillis() + (atr.expires_in * 1000)
-  } yield AccessTokenDetails(atr.access_token, validUntil, atr.refresh_token)
+  } yield TokenDetails(atr.access_token, validUntil, atr.refresh_token)
 }
 
