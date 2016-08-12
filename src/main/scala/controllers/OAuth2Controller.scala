@@ -7,8 +7,7 @@ import cats.data.Xor.{Left, Right}
 import cats.data.{Xor, XorT}
 import cats.std.future._
 import cats.syntax.xor._
-import data.{SchemeClaimOps, StashedTokenDetails, TransientAccessTokenOps}
-import models.Emprefs
+import data.{SchemeClaimOps, StashedTokenDetails, TokenStashOps}
 import play.api.mvc._
 import services.ServiceConfig.config
 import services.{LevyApiService, OAuth2Service}
@@ -16,16 +15,16 @@ import services.{LevyApiService, OAuth2Service}
 import scala.concurrent.{ExecutionContext, Future}
 
 
-class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: TransientAccessTokenOps, schemes: SchemeClaimOps, api: LevyApiService, userAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
+class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: TokenStashOps, schemes: SchemeClaimOps, api: LevyApiService, userAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
 
-  def startOauthDance(empref: String)(implicit request: RequestHeader): Future[Result] = {
+  def startOauthDance(implicit request: RequestHeader): Result = {
     val params = Map(
       "client_id" -> Seq(config.client.id),
       "redirect_uri" -> Seq(routes.OAuth2Controller.claimCallback(None, None).absoluteURL(config.client.useSSL)),
       "scope" -> Seq("read:apprenticeship-levy"),
       "response_type" -> Seq("code")
     )
-    Future.successful(Redirect(config.taxservice.authorizeSchemeUri, params).addingToSession("empref" -> empref))
+    Redirect(config.taxservice.authorizeSchemeUri, params)
   }
 
   case class TokenDetails(accessToken: String, validUntil: Long, refreshToken: String)
@@ -33,13 +32,13 @@ class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: Tra
   def claimCallback(code: Option[String], state: Option[String]) = userAction.async { implicit request =>
     val redirectToIndex = Redirect(controllers.routes.ClientController.index())
 
-    val atd: Future[Xor[Result, TokenDetails]] = code match {
+    val tokenDetails: Future[Xor[Result, TokenDetails]] = code match {
       case None => Future.successful(Left(BadRequest("No oAuth code")))
       case Some(c) => convertCodeToToken(c).map(_.right)
     }
 
     val refx = for {
-      td <- XorT(atd)
+      td <- XorT(tokenDetails)
       emprefs <- XorT(api.root(td.accessToken).map(r => r.leftMap(BadRequest(_))))
       ds = emprefs.emprefs.map(StashedTokenDetails(_, td.accessToken, td.validUntil, td.refreshToken, request.user.id))
       ref <- XorT[Future, Result, Long](accessTokens.stash(ds).map(_.right))

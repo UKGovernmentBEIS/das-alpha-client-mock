@@ -33,30 +33,9 @@
                 </li>
                 }
                 </ul>
+                <a href="@controllers.routes.ClientController.claimScheme">Claim a scheme</a>
             </div>
-            <div>
-                <h3>Claim a scheme</h3>
-                <form action="@controllers.routes.ClientController.claimScheme" method="post">
-                    <fieldset class="form-field-group">
-                    @if(form.errors("empref").nonEmpty) {
-                        <div class="form-field form-field--error fields-aligned">
-                            @form.errors("empref").map { e => <span class="error-notification">@e.message</span> }
-                            <label class="label--full-length" for="empref">
-                                PAYE Scheme Employer Reference (e.g. 123/AB12345)</label>
-                            <input type="text" id="empref" name="empref"/>
-                            <input class="button" type="submit" value="Claim"/>
-                        </div>
-                    } else {
-                        <div class="form-field fields-aligned">
-                            <label class="label--full-length" for="empref">
-                                PAYE Scheme Employer Reference (e.g. 123/AB12345)</label>
-                            <input type="text" id="empref" name="empref"/>
-                            <input class="button" type="submit" value="Claim"/>
-                        </div>
-                    }
-                    </fieldset>
-                </form>
-            </div>
+
         </div>
 
     }

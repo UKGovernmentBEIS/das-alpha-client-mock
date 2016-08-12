@@ -29,7 +29,7 @@
                 @statuses.map { s =>
                   <li>
                       @{s match {
-                          case Unclaimed(empref) => empref
+                          case Unclaimed(empref) => s"$empref - connect this scheme to your account"
                           case UserClaimed(empref) => s"$empref - you have already claimed this"
                           case OtherClaimed(empref) => s"$empref - someone else has already claimed this"
                       }}

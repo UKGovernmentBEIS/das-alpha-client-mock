@@ -1,18 +1,14 @@
 # --- !Ups
 
-CREATE SEQUENCE "transient_access_token_seq" INCREMENT BY 1 NO MAXVALUE NO MINVALUE START 100000 CACHE 1;
-
-CREATE TABLE "transient_access_token_details" (
-  "id"            BIGINT  NOT NULL PRIMARY KEY DEFAULT nextval('transient_access_token_seq' :: REGCLASS),
+CREATE TABLE "token_stash" (
   "empref"        VARCHAR NOT NULL,
-  "user_id"       BIGINT  NOT NULL REFERENCES "das_user",
   "access_token"  VARCHAR NOT NULL,
   "valid_until"   BIGINT  NOT NULL,
-  "refresh_token" VARCHAR NOT NULL
+  "refresh_token" VARCHAR NOT NULL,
+  "ref"           BIGINT  NOT NULL,
+  "user_id"       BIGINT  NOT NULL REFERENCES "das_user"
 );
 
 # --- !Downs
 
-DROP TABLE "transient_access_token_details";
-
-DROP SEQUENCE "transient_access_token_seq"
+DROP SEQUENCE "token_stash"

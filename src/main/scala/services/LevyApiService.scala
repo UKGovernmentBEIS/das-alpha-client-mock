@@ -42,6 +42,7 @@ class LevyApiImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) extends
 
         case _ =>
           Logger.error(s"Got status ${response.status} calling levy api")
+          Logger.error(uri)
           Logger.error(response.body)
           Left(s"Got status ${response.status} with body '${response.body}' when calling levy api")
       }
@@ -64,6 +65,7 @@ class LevyApiImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) extends
 
         case _ =>
           Logger.error(s"Got status ${response.status} calling levy api")
+          Logger.error(uri)
           Logger.error(response.body)
           Left(s"Got status ${response.status} with body '${response.body}' when calling levy api")
       }

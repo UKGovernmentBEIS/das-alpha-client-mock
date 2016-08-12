@@ -1,8 +1,8 @@
 import java.time.Clock
 
 import com.google.inject.AbstractModule
-import data.{DASUserOps, SchemeClaimOps, TransientAccessTokenOps}
-import db.{DASUserDAO, SchemeClaimDAO, TransientAccessTokenDAO}
+import data.{DASUserOps, SchemeClaimOps, TokenStashOps}
+import db.{DASUserDAO, SchemeClaimDAO, TokenStashDAO}
 
 class Module extends AbstractModule {
 
@@ -12,6 +12,6 @@ class Module extends AbstractModule {
 
     bind(classOf[DASUserOps]).to(classOf[DASUserDAO])
     bind(classOf[SchemeClaimOps]).to(classOf[SchemeClaimDAO])
-    bind(classOf[TransientAccessTokenOps]).to(classOf[TransientAccessTokenDAO])
+    bind(classOf[TokenStashOps]).to(classOf[TokenStashDAO])
   }
 }
