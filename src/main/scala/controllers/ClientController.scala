@@ -48,7 +48,7 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
 
     statusF.map {
       case Seq() => BadRequest("ref is not valid")
-      case statuses => Ok(views.html.selectEmpref(request.user, statuses, ref))
+      case statuses => Ok(views.html.selectSchemes(request.user, statuses, ref))
     }
   }
 
