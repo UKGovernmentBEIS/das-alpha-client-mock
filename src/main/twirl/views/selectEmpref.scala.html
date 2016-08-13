@@ -29,9 +29,9 @@
                 @statuses.map { s =>
                   <li>
                       @{s match {
-                          case Unclaimed(empref) => s"$empref - connect this scheme to your account"
-                          case UserClaimed(empref) => s"$empref - you have already claimed this"
-                          case OtherClaimed(empref) => s"$empref - someone else has already claimed this"
+                          case Unclaimed(employerDetail) => s"${employerDetail.empref} ${employerDetail.name1.getOrElse("")} ${employerDetail.name2.getOrElse("")}- connect this scheme to your account"
+                          case UserClaimed(employerDetail) => s"$employerDetail - you have already claimed this"
+                          case OtherClaimed(employerDetail) => s"$employerDetail - someone else has already claimed this"
                       }}
                   </li>
                 }

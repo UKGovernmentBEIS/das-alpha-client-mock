@@ -3,16 +3,18 @@ package controllers
 import javax.inject.Inject
 
 import actions.ClientUserAction
-import data.{SchemeClaim, SchemeClaimOps, StashedTokenDetails, TokenStashOps}
-import models.Emprefs
+import cats.data.Xor.{Left, Right}
+import data.{SchemeClaim, SchemeClaimOps, TokenStashOps}
+import models.EmployerDetail
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation._
 import play.api.mvc._
+import services.LevyApiService
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: SchemeClaimOps, stash: TokenStashOps, userAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
+class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: SchemeClaimOps, stash: TokenStashOps, userAction: ClientUserAction, levy: LevyApiService)(implicit exec: ExecutionContext) extends Controller {
 
   private[controllers] def unclaimed(claims: Seq[SchemeClaim], userId: Long): Constraint[String] = Constraint[String]("already claimed") { empref =>
     def alreadyClaimed(claim: SchemeClaim): Boolean = claim.empref.trim() == empref.trim()
@@ -40,23 +42,28 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
   def claimScheme = userAction { implicit request => oauth2Controller.startOauthDance }
 
   def selectSchemes(ref: Long) = userAction.async { implicit request =>
-    val statusesF: Future[Seq[SchemeStatus]] =
-      stash.peek(ref)
-        .map(_.filter(_.userId == request.user.id).map(_.empref))
-        .flatMap(emprefs => checkStatuses(request.user.id, emprefs))
+    val validTokens = stash.peek(ref).map(_.filter(_.userId == request.user.id))
+    val employerDetails = validTokens.flatMap(tokens => Future.sequence(tokens.map(token => findEmployerDetails(token.empref, token.accessToken))))
+    val statusF = employerDetails.flatMap(details => checkStatuses(request.user.id, details))
 
-    statusesF.map {
+    statusF.map {
       case Seq() => BadRequest("ref is not valid")
       case statuses => Ok(views.html.selectEmpref(request.user, statuses, ref))
     }
   }
 
-  def checkStatuses(userId: Long, emprefs: Seq[String]): Future[Seq[SchemeStatus]] = Future.sequence {
-    emprefs.map { empref =>
-      claims.forEmpref(empref) map {
-        case None => Unclaimed(empref)
-        case Some(claim) if claim.userId == userId => UserClaimed(empref)
-        case Some(claim) => OtherClaimed(empref)
+  def findEmployerDetails(empref: String, accessToken: String)(implicit rh: RequestHeader): Future[EmployerDetail] =
+    levy.employerDetails(empref, accessToken) map {
+      case Left(s) => throw new Error(s)
+      case Right(d) => d
+    }
+
+  def checkStatuses(userId: Long, details: Seq[EmployerDetail]): Future[Seq[SchemeStatus]] = Future.sequence {
+    details.map { detail =>
+      claims.forEmpref(detail.empref) map {
+        case None => Unclaimed(detail)
+        case Some(claim) if claim.userId == userId => UserClaimed(detail)
+        case Some(claim) => OtherClaimed(detail)
       }
     }
   }
