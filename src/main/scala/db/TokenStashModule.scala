@@ -14,7 +14,7 @@ trait TokenStashModule extends SlickModule {
   val tokenStash = TableQuery[TokenStashTable]
 
   class TokenStashTable(tag: Tag) extends Table[StashedTokenDetails](tag, "token_stash") {
-    def ref = column[Long]("ref")
+    def ref = column[Int]("ref")
 
     def userId = column[Long]("user_id")
 
@@ -37,7 +37,7 @@ class TokenStashDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProv
 
   import driver.api._
 
-  override def stash(details: Seq[StashedTokenDetails]): Future[Long] = db.run {
+  override def stash(details: Seq[StashedTokenDetails]): Future[Int] = db.run {
     val ref = Random.nextInt().abs
     (tokenStash ++= details.map(_.copy(ref = ref))).map(_ => ref)
   }
@@ -45,7 +45,7 @@ class TokenStashDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProv
   /**
     * retrieve stashed details associated with id, but leave them in place
     */
-  override def peek(ref: Long): Future[Seq[StashedTokenDetails]] = db.run {
+  override def peek(ref: Int): Future[Seq[StashedTokenDetails]] = db.run {
     tokenStash.filter(_.ref === ref).result
   }
 
@@ -53,7 +53,7 @@ class TokenStashDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProv
     * Pull back the details associated with the id (if there are any). Will remove
     * the details as well, so you can't use the id again.
     */
-  override def unstash(ref: Long): Future[Seq[StashedTokenDetails]] = db.run {
+  override def unstash(ref: Int): Future[Seq[StashedTokenDetails]] = db.run {
     tokenStash.filter(_.ref === ref).result
   }.map { atd =>
     atd.foreach(_ => tokenStash.filter(_.ref === ref).delete)
@@ -63,7 +63,7 @@ class TokenStashDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProv
   /**
     * Remove the stashed details associated with the ref
     */
-  override def drop(ref: Long): Future[Int] = db.run {
+  override def drop(ref: Int): Future[Int] = db.run {
     tokenStash.filter(_.ref === ref).delete
   }
 }

@@ -41,7 +41,7 @@ class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: Tok
       td <- XorT(tokenDetails)
       emprefs <- XorT(api.root(td.accessToken).map(r => r.leftMap(BadRequest(_))))
       ds = emprefs.emprefs.map(StashedTokenDetails(_, td.accessToken, td.validUntil, td.refreshToken, request.user.id))
-      ref <- XorT[Future, Result, Long](accessTokens.stash(ds).map(_.right))
+      ref <- XorT[Future, Result, Int](accessTokens.stash(ds).map(_.right))
     } yield ref
 
     refx.value.map {

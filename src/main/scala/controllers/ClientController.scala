@@ -41,7 +41,7 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
 
   def claimScheme = userAction { implicit request => oauth2Controller.startOauthDance }
 
-  def selectSchemes(ref: Long) = userAction.async { implicit request =>
+  def selectSchemes(ref: Int) = userAction.async { implicit request =>
     val validTokens = stash.peek(ref).map(_.filter(_.userId == request.user.id))
     val employerDetails = validTokens.flatMap(tokens => Future.sequence(tokens.map(token => findEmployerDetails(token.empref, token.accessToken))))
     val statusF = employerDetails.flatMap(details => checkStatuses(request.user.id, details))
