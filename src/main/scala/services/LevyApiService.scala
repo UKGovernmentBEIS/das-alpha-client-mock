@@ -89,7 +89,7 @@ class LevyApiImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) extends
   }
 
   def employerDetails(empref: String, authToken: String)(implicit rh: RequestHeader): Future[Xor[String, EmployerDetail]] = {
-    val uri = config.api.baseURI + s"/epaye/${helper.urlEncode(empref)}"
+    val uri = config.api.baseURI + s"/epaye/${helper.urlEncode(empref)}/"
 
     ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken", "Accept" -> "application/vnd.hmrc.1.0+json").get.map { response =>
       response.status match {
@@ -109,7 +109,7 @@ class LevyApiImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) extends
           Logger.error(s"Got status ${response.status} calling levy api")
           Logger.error(uri)
           Logger.error(response.body)
-          Left(s"Got status ${response.status} with body '${response.body}' when calling levy api")
+          Right(EmployerDetail(empref, None, None))
       }
     }
   }

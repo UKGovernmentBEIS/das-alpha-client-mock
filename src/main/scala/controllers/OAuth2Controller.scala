@@ -30,8 +30,6 @@ class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: Tok
   case class TokenDetails(accessToken: String, validUntil: Long, refreshToken: String)
 
   def claimCallback(code: Option[String], state: Option[String]) = userAction.async { implicit request =>
-    val redirectToIndex = Redirect(controllers.routes.ClientController.index())
-
     val tokenDetails: Future[Xor[Result, TokenDetails]] = code match {
       case None => Future.successful(Left(BadRequest("No oAuth code")))
       case Some(c) => convertCodeToToken(c).map(_.right)

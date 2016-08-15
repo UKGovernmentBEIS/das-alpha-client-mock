@@ -6,8 +6,11 @@ case class ServiceConfig(taxservice: TaxServiceConfig, api: ApiConfig, client: C
 
 case class ClientConfig(id: String, secret: String, useSSL: Boolean)
 
-case class ApiConfig(host: String) {
-  val baseURI = host + "/sandbox"
+case class ApiConfig(host: String, isSandbox: Option[Boolean] = None, isLocal: Option[Boolean] = None) {
+  val baseURI =
+    host +
+      (if (isLocal.getOrElse(false)) "" else "/apprenticeship-levy") +
+      (if (isSandbox.getOrElse(false)) "/sandbox" else "")
 }
 
 case class TaxServiceConfig(baseURI: String, callbackURL: String) {
