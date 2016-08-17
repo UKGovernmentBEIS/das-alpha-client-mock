@@ -47,7 +47,6 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
     val statusF = employerDetails.flatMap(details => checkStatuses(request.user.id, details))
 
     statusF.map {
-      case Seq() => BadRequest("ref is not valid")
       case statuses => Ok(views.html.selectSchemes(request.user, statuses, ref))
     }
   }
