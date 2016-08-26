@@ -5,7 +5,7 @@ import javax.inject.Inject
 import actions.ClientUserAction
 import cats.data.Xor.{Left, Right}
 import cats.data.{Xor, XorT}
-import cats.std.future._
+import cats.instances.future._
 import cats.syntax.xor._
 import data.{SchemeClaimOps, StashedTokenDetails, TokenStashOps}
 import play.api.mvc._

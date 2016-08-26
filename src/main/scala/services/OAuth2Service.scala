@@ -39,6 +39,7 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
   }
 
   def convertCode(code: String): Future[AccessTokenResponse] = {
+    Logger.debug("convert code")
     val params = Seq(
       "grant_type" -> "authorization_code",
       "code" -> code,
@@ -63,6 +64,7 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
   implicit val rtrFormat = Json.format[RefreshTokenResponse]
 
   def refreshAccessToken(refreshToken: String): Future[Option[RefreshTokenResponse]] = {
+    Logger.debug("refresh access token")
     val params = Seq(
       "grant_type" -> "refresh_token",
       "refresh_token" -> refreshToken
