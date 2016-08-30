@@ -24,7 +24,7 @@ class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: Tok
       "scope" -> Seq("read:apprenticeship-levy"),
       "response_type" -> Seq("code")
     )
-    Redirect(config.taxservice.authorizeSchemeUri, params)
+    Redirect(config.api.authorizeSchemeUri, params)
   }
 
   case class TokenDetails(accessToken: String, validUntil: Long, refreshToken: String)

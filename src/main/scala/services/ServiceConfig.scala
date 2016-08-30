@@ -2,20 +2,18 @@ package services
 
 import scala.util.{Failure, Success}
 
-case class ServiceConfig(taxservice: TaxServiceConfig, api: ApiConfig, client: ClientConfig)
+case class ServiceConfig(api: ApiConfig, client: ClientConfig)
 
 case class ClientConfig(id: String, secret: String, useSSL: Boolean)
 
-case class ApiConfig(host: String, isSandbox: Option[Boolean] = None, isLocal: Option[Boolean] = None) {
+case class ApiConfig(host: String, isSandbox: Option[Boolean] = None, isLocal: Option[Boolean] = None, callbackURL: String) {
   val baseURI =
     host +
       (if (isLocal.getOrElse(false)) "" else "/apprenticeship-levy") +
       (if (isSandbox.getOrElse(false)) "/sandbox" else "")
-}
 
-case class TaxServiceConfig(baseURI: String, callbackURL: String) {
-  val accessTokenUri = s"$baseURI/oauth/token"
-  val authorizeSchemeUri = s"$baseURI/oauth/authorize"
+  val accessTokenUri = s"$host/oauth/token"
+  val authorizeSchemeUri = s"$host/oauth/authorize"
 }
 
 object ServiceConfig {

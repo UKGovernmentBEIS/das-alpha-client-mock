@@ -35,7 +35,7 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
     (clientDetails ++ ps).map { case (k, v) => k -> Seq(v) }
 
   private[services] def call(params: Seq[(String, String)]): Future[WSResponse] = {
-    ws.url(taxservice.accessTokenUri).withMethod("POST").withBody(mkParams(params)).execute()
+    ws.url(api.accessTokenUri).withMethod("POST").withBody(mkParams(params)).execute()
   }
 
   def convertCode(code: String): Future[AccessTokenResponse] = {
@@ -43,7 +43,7 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
     val params = Seq(
       "grant_type" -> "authorization_code",
       "code" -> code,
-      "redirect_uri" -> taxservice.callbackURL
+      "redirect_uri" -> api.callbackURL
     )
 
     call(params).map { response =>
