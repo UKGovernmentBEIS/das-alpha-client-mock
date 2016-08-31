@@ -14,13 +14,12 @@ import services.{LevyApiService, OAuth2Service}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-
 class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: TokenStashOps, schemes: SchemeClaimOps, api: LevyApiService, userAction: ClientUserAction)(implicit exec: ExecutionContext) extends Controller {
 
   def startOauthDance(implicit request: RequestHeader): Result = {
     val params = Map(
       "client_id" -> Seq(config.client.id),
-      "redirect_uri" -> Seq(routes.OAuth2Controller.claimCallback(None, None).absoluteURL(config.client.useSSL)),
+      "redirect_uri" -> Seq(routes.OAuth2Controller.claimCallback(None, None, None, None, None).absoluteURL(config.client.useSSL)),
       "scope" -> Seq("read:apprenticeship-levy"),
       "response_type" -> Seq("code")
     )
@@ -29,7 +28,7 @@ class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: Tok
 
   case class TokenDetails(accessToken: String, validUntil: Long, refreshToken: String)
 
-  def claimCallback(code: Option[String], state: Option[String]) = userAction.async { implicit request =>
+  def claimCallback(code: Option[String], state: Option[String], error:Option[String], errorDescription:Option[String], errorCode:Option[String]) = userAction.async { implicit request =>
     val tokenDetails: Future[Xor[Result, TokenDetails]] = code match {
       case None => Future.successful(Left(BadRequest("No oAuth code")))
       case Some(c) => convertCodeToToken(c).map(_.right)
@@ -37,7 +36,7 @@ class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: Tok
 
     val refx = for {
       td <- XorT(tokenDetails)
-      emprefs <- XorT(api.root(td.accessToken).map(r => r.leftMap(BadRequest(_))))
+      emprefs <- XorT(api.root(td.accessToken).map(_.leftMap(BadRequest(_))))
       ds = emprefs.emprefs.map(StashedTokenDetails(_, td.accessToken, td.validUntil, td.refreshToken, request.user.id))
       ref <- XorT[Future, Result, Int](accessTokens.stash(ds).map(_.right))
     } yield ref
