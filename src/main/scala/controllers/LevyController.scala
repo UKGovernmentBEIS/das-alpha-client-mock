@@ -2,7 +2,6 @@ package controllers
 
 import javax.inject.Inject
 
-import cats.data.Xor._
 import data.SchemeClaimOps
 import play.api.mvc._
 import services.LevyApiService

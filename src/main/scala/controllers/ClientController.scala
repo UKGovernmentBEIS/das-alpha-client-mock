@@ -3,7 +3,6 @@ package controllers
 import javax.inject.Inject
 
 import actions.ClientUserAction
-import cats.data.Xor.{Left, Right}
 import data.{SchemeClaim, SchemeClaimOps, TokenStashOps}
 import models.EmployerDetail
 import play.api.data.Form
@@ -46,9 +45,7 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
     val employerDetails = validTokens.flatMap(tokens => Future.sequence(tokens.map(token => findEmployerDetails(token.empref, token.accessToken))))
     val statusF = employerDetails.flatMap(details => checkStatuses(request.user.id, details))
 
-    statusF.map {
-      case statuses => Ok(views.html.selectSchemes(request.user, statuses, ref))
-    }
+    statusF.map(statuses => Ok(views.html.selectSchemes(request.user, statuses, ref)))
   }
 
   def findEmployerDetails(empref: String, accessToken: String)(implicit rh: RequestHeader): Future[EmployerDetail] =
