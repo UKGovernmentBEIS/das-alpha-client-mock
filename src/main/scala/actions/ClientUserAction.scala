@@ -1,7 +1,8 @@
 package actions
 
 import com.google.inject.Inject
-import data.{DASUser, DASUserOps}
+import data.{DASUser, DASUserOps, UserId}
+import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
 
@@ -21,10 +22,12 @@ class ClientUserAction @Inject()(dasUsers: DASUserOps)(implicit ec: ExecutionCon
     val login = Left(Redirect(controllers.routes.ClientSignInController.showSignIn()))
     request.session.get(sessionKey) match {
       case None => Future.successful(login)
-      case Some(ParseLong(id)) => dasUsers.byId(id).map {
-        case Some(u) => Right(new ClientUserRequest(request, u))
-        case None => login
-      }
+      case Some(ParseLong(id)) =>
+        Logger.debug(s"got user id $id from session")
+        dasUsers.byId(UserId(id)).map {
+          case Some(u) => Right(new ClientUserRequest(request, u))
+          case None => login
+        }
       case Some(s) => Future.successful(login)
     }
   }

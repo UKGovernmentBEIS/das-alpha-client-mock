@@ -1,7 +1,7 @@
 package db
 
 import com.google.inject.Inject
-import data.{StashedTokenDetails, TokenStashOps}
+import data.{StashedTokenDetails, TokenStashOps, UserId}
 import play.api.db.slick.DatabaseConfigProvider
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -11,12 +11,14 @@ trait TokenStashModule extends SlickModule {
 
   import driver.api._
 
+  implicit def UserIdMapper: BaseColumnType[UserId] = MappedColumnType.base[UserId, Long](_.id, UserId)
+
   val tokenStash = TableQuery[TokenStashTable]
 
   class TokenStashTable(tag: Tag) extends Table[StashedTokenDetails](tag, "token_stash") {
     def ref = column[Int]("ref")
 
-    def userId = column[Long]("user_id")
+    def userId = column[UserId]("user_id")
 
     def empref = column[String]("empref")
 

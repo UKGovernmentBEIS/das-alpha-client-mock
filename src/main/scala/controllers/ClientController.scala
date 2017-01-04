@@ -3,7 +3,7 @@ package controllers
 import javax.inject.Inject
 
 import actions.ClientUserAction
-import data.{SchemeClaim, SchemeClaimOps, TokenStashOps}
+import data.{SchemeClaimOps, SchemeClaimRow, TokenStashOps, UserId}
 import models.EmployerDetail
 import play.api.data.Form
 import play.api.data.Forms._
@@ -15,10 +15,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: SchemeClaimOps, stash: TokenStashOps, userAction: ClientUserAction, levy: LevyApiService)(implicit exec: ExecutionContext) extends Controller {
 
-  private[controllers] def unclaimed(claims: Seq[SchemeClaim], userId: Long): Constraint[String] = Constraint[String]("already claimed") { empref =>
-    def alreadyClaimed(claim: SchemeClaim): Boolean = claim.empref.trim() == empref.trim()
+  private[controllers] def unclaimed(claims: Seq[SchemeClaimRow], userId: UserId): Constraint[String] = Constraint[String]("already claimed") { empref =>
+    def alreadyClaimed(claim: SchemeClaimRow): Boolean = claim.empref.trim() == empref.trim()
 
-    def claimedByUser(claim: SchemeClaim): Boolean = alreadyClaimed(claim) && claim.userId == userId
+    def claimedByUser(claim: SchemeClaimRow): Boolean = alreadyClaimed(claim) && claim.userId == userId
 
     empref match {
       case _ if claims.exists(claimedByUser) => Invalid(ValidationError(s"you have already claimed scheme $empref"))
@@ -27,7 +27,7 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
     }
   }
 
-  private[controllers] def claimMapping(claimedSchemes: Seq[SchemeClaim], userId: Long) =
+  private[controllers] def claimMapping(claimedSchemes: Seq[SchemeClaimRow], userId: UserId) =
     Form("empref" -> nonEmptyText.verifying(unclaimed(claimedSchemes, userId)))
 
   def index = Action(Redirect(controllers.routes.ClientController.showSchemes()))
@@ -54,7 +54,7 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
       case Right(d) => d
     }
 
-  def checkStatuses(userId: Long, details: Seq[EmployerDetail]): Future[Seq[SchemeStatus]] = Future.sequence {
+  def checkStatuses(userId: UserId, details: Seq[EmployerDetail]): Future[Seq[SchemeStatus]] = Future.sequence {
     details.map { detail =>
       claims.forEmpref(detail.empref) map {
         case None => Unclaimed(detail)

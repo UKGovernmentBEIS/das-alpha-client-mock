@@ -31,7 +31,7 @@ class ClientSignInController @Inject()(dasUserDAO: DASUserOps, userAction: Clien
       formWithErrors => Future.successful(BadRequest(views.html.signin(formWithErrors))),
       userData => {
         dasUserDAO.validate(userData.name, userData.password).map {
-          case Some(user) => Redirect(controllers.routes.ClientController.index()).addingToSession(userAction.sessionKey -> user.id.toString)
+          case Some(user) => Redirect(controllers.routes.ClientController.index()).addingToSession(userAction.sessionKey -> user.id.id.toString)
           case None => Ok(views.html.signin(signInForm.withError("username", "Bad user name or password")))
         }
       }

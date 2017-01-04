@@ -8,8 +8,11 @@ lazy val `das-alpha-client-mock` = (project in file("."))
 
 git.useGitDescribe := true
 
-routesImport += "uk.gov.hmrc.domain._, models.PlayBindings._"
-
+routesImport ++= Seq(
+  "uk.gov.hmrc.domain._",
+  "models.PlayBindings._",
+  "com.wellfactored.playbindings.ValueClassUrlBinders._"
+)
 scalaVersion := "2.11.8"
 
 PlayKeys.devSettings := Seq("play.server.http.port" -> "9000")
@@ -25,6 +28,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-slick-evolutions" % "2.0.0",
   "org.postgresql" % "postgresql" % "9.4.1208",
   "org.mindrot" % "jbcrypt" % "0.3m",
+  "com.wellfactored" %% "play-bindings" % "2.0.0",
   "org.typelevel" %% "cats-core" % "0.8.1",
   "com.github.melrief" %% "pureconfig" % "0.1.6",
   "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.0-RC1" % Test
