@@ -1,133 +1,82 @@
-/*
- * Copyright (c) 2011 IETF Trust and the persons identified as
- * authors of the code. All rights reserved.
- * <p>
- * Redistribution and use in source and binary forms, with or without
- * modification, is permitted pursuant to, and subject to the license
- * terms contained in, the Simplified BSD License set forth in Section
- * 4.c of the IETF Trust's Legal Provisions Relating to IETF Documents
- * (http://trustee.ietf.org/license-info).
- *//*
- * Copyright (c) 2011 IETF Trust and the persons identified as
- * authors of the code. All rights reserved.
- * <p>
- * Redistribution and use in source and binary forms, with or without
- * modification, is permitted pursuant to, and subject to the license
- * terms contained in, the Simplified BSD License set forth in Section
- * 4.c of the IETF Trust's Legal Provisions Relating to IETF Documents
- * (http://trustee.ietf.org/license-info).
- */
+/**
+  * Based on https://github.com/hmrc/totp-generator/blob/master/src/main/scala/uk/gov/hmrc/totp/TotpGenerator.scala
+  */
 package tools
 
-import java.lang.reflect.UndeclaredThrowableException
-import java.math.BigInteger
-import java.security.GeneralSecurityException
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-import scala.util.{Failure, Try}
+import org.apache.commons.codec.binary.Base32
 
-/**
-  * This is an example implementation of the OATH
-  * TOTP algorithm.
-  * Visit www.openauthentication.org for more information.
-  *
-  * @author Johan Rydell, PortWise, Inc.
-  */
-object TOTP {
+import scala.math._
 
-  implicit class StringSyntax(s: String) {
-    def prePad(n: Int, c: Char): String = s.reverse.padTo(n, c).reverse
-  }
+sealed trait CryptoAlgorithm
 
-  /**
-    * This method uses the JCE to provide the crypto algorithm.
-    * HMAC computes a Hashed Message Authentication Code with the
-    * crypto hash algorithm as a parameter.
-    *
-    * @param crypto   :   the crypto algorithm (HmacSHA1, HmacSHA256,
-    *                 HmacSHA512)
-    * @param keyBytes : the bytes to use for the HMAC key
-    * @param text     :     the message or text to be authenticated
-    */
-  private def hmac_sha(crypto: String, keyBytes: Array[Byte], text: Array[Byte]): Array[Byte] = {
-    val hmac = Mac.getInstance(crypto)
-    hmac.init(new SecretKeySpec(keyBytes, "RAW"))
-    hmac.doFinal(text)
-  }
+case object HmacSHA512 extends CryptoAlgorithm
+
+case class TimeWindow(value: Long) extends AnyVal {
+  def next: TimeWindow = TimeWindow(value + 1)
+
+  def prev: TimeWindow = TimeWindow(value - 1)
+}
+
+object TimeWindow {
+  def forTimestamp(ts: Long): TimeWindow = TimeWindow(ts / 30000)
+
+  def forNow: TimeWindow = forTimestamp(System.currentTimeMillis())
 
   /**
-    * This method converts a HEX string to Byte[]
-    *
-    * @param hex : the HEX string
-    * @return a byte array
+    * Generate three time windows  - one for the given timestamp and the
+    * previous and next windows. The protocol for using TOTP suggest it is a good
+    * idea to check all three of these when validating a code to account for small
+    * discrepancies in system clocks between the client and the server.
     */
-  private def hexStr2Bytes(hex: String): Array[Byte] = {
-    // Adding one byte to get the right conversion
-    // Values starting with "0" can be converted
-    new BigInteger("10" + hex, 16).toByteArray.drop(1)
-  }
-
-  private val DIGITS_POWER: Array[Int] = // 0 1  2   3    4     5      6       7        8
-    Array(1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000)
-
-  /**
-    * This method generates a TOTP value for the given
-    * set of parameters.
-    *
-    * @param key          :          the shared secret, HEX encoded
-    * @param time         :         a value that reflects a time
-    * @param returnDigits : number of digits to return
-    * @return a numeric String in base 10 that includes
-    *         {truncationDigits} digits
-    */
-  def generate(key: String, time: String, returnDigits: Int): String =
-  generate(key, time, returnDigits, "HmacSHA1")
-
-  /**
-    * This method generates a TOTP value for the given
-    * set of parameters.
-    *
-    * @param key          :          the shared secret, HEX encoded
-    * @param time         :         a value that reflects a time
-    * @param returnDigits : number of digits to return
-    * @return a numeric String in base 10 that includes
-    *         {truncationDigits} digits
-    */
-  def generate256(key: String, time: String, returnDigits: Int): String =
-  generate(key, time, returnDigits, "HmacSHA256")
-
-  /**
-    * This method generates a TOTP value for the given
-    * set of parameters.
-    *
-    * @param key          :          the shared secret, HEX encoded
-    * @param time         :         a value that reflects a time
-    * @param returnDigits : number of digits to return
-    * @return a numeric String in base 10 that includes
-    *         {truncationDigits} digits
-    */
-  def generate512(key: String, time: String, returnDigits: Int): String =
-  generate(key, time, returnDigits, "HmacSHA512")
-
-  /**
-    * This method generates a TOTP value for the given
-    * set of parameters.
-    *
-    * @param key          :          the shared secret, HEX encoded
-    * @param time         :         a value that reflects a time
-    * @param returnDigits : number of digits to return
-    * @param crypto       :       the crypto function to use
-    * @return a numeric String in base 10 that includes
-    *         {truncationDigits} digits
-    */
-  def generate(key: String, time: String, returnDigits: Int, crypto: String): String = {
-    val hash = hmac_sha(crypto, hexStr2Bytes(key), hexStr2Bytes(time.prePad(16, '0')))
-    // put selected bytes into result int
-    val offset = hash(hash.length - 1) & 0xf
-    val binary = ((hash(offset) & 0x7f) << 24) | ((hash(offset + 1) & 0xff) << 16) | ((hash(offset + 2) & 0xff) << 8) | (hash(offset + 3) & 0xff)
-    val otp = binary % DIGITS_POWER(returnDigits)
-
-    Integer.toString(otp).prePad(returnDigits, '0')
+  def around(ts: Long): Seq[TimeWindow] = {
+    val tw = TimeWindow.forTimestamp(ts)
+    Seq(tw, tw.next, tw.prev)
   }
 }
+
+case class TOTPCode(value: String) extends AnyVal
+
+trait TOTP {
+  def generateCodeAtTime(secret: String, ts: Long): TOTPCode =
+    generateCode(secret, TimeWindow.forTimestamp(ts))
+
+  /**
+    * Generate codes for the time window for the timestamp as well as the
+    * previous and next time windows.
+    */
+  def generateCodesAround(secret: String, ts: Long): Seq[TOTPCode] =
+    TimeWindow.around(ts).map { tw =>
+      generateCode(secret, tw)
+    }
+
+  def generateCode(secret: String, timeWindow: TimeWindow): TOTPCode = {
+    val codeLength = 8
+    val crypto = HmacSHA512
+    val msg: Array[Byte] = BigInt(timeWindow.value).toByteArray.reverse.padTo(8, 0.toByte).reverse
+
+    val hash = hmac_sha(crypto.toString, new Base32().decode(secret), msg)
+    val offset: Int = hash(hash.length - 1) & 0xf
+    val binary: Long = ((hash(offset) & 0x7f) << 24) |
+      ((hash(offset + 1) & 0xff) << 16) |
+      ((hash(offset + 2) & 0xff) << 8 |
+        (hash(offset + 3) & 0xff))
+
+    val otp: Long = binary % pow(10, codeLength).toLong
+
+    TOTPCode(("0" * codeLength + otp.toString).takeRight(codeLength))
+  }
+
+  private def hmac_sha(crypto: String, keyBytes: Array[Byte], text: Array[Byte]): Array[Byte] = {
+    val hmac: Mac = Mac.getInstance(crypto)
+    val macKey = new SecretKeySpec(keyBytes, "RAW")
+    hmac.init(macKey)
+    hmac.doFinal(text)
+  }
+}
+
+object TOTP extends TOTP
+
+
