@@ -21,4 +21,4 @@ GET         /remove-scheme             controllers.ClientController.removeScheme
 GET         /claim-callback            controllers.OAuth2Controller.claimCallback(code:Option[String], state:Option[String], error:Option[String], error_description: Option[String], error_code:Option[String])
 
 GET         /admin                     controllers.AdminController.index()
-GET         /admin/expire-token        controllers.AdminController.expireToken(token:String)
+GET         /admin/expire-token        controllers.AdminController.expireToken(token:AccessToken)

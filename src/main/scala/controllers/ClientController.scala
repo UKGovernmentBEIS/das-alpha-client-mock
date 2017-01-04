@@ -3,7 +3,7 @@ package controllers
 import javax.inject.Inject
 
 import actions.ClientUserAction
-import data.{SchemeClaimOps, SchemeClaimRow, TokenStashOps, UserId}
+import data._
 import models.EmployerDetail
 import play.api.data.Form
 import play.api.data.Forms._
@@ -48,7 +48,7 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
     statusF.map(statuses => Ok(views.html.selectSchemes(request.user, statuses, ref)))
   }
 
-  def findEmployerDetails(empref: String, accessToken: String)(implicit rh: RequestHeader): Future[EmployerDetail] =
+  def findEmployerDetails(empref: String, accessToken: AccessToken)(implicit rh: RequestHeader): Future[EmployerDetail] =
     levy.employerDetails(empref, accessToken) map {
       case Left(s) => throw new Error(s)
       case Right(d) => d

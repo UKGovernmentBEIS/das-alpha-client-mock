@@ -5,9 +5,8 @@ import javax.inject.Inject
 import actions.ClientUserAction
 import cats.data.EitherT
 import cats.instances.future._
-import cats.instances.either._
 import cats.syntax.either._
-import data.{SchemeClaimOps, StashedTokenDetails, TokenStashOps}
+import data._
 import play.api.mvc._
 import services.ServiceConfig.config
 import services.{LevyApiService, OAuth2Service}
@@ -26,7 +25,7 @@ class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: Tok
     Redirect(config.api.authorizeSchemeUri, params)
   }
 
-  case class TokenDetails(accessToken: String, validUntil: Long, refreshToken: String)
+  case class TokenDetails(accessToken: AccessToken, validUntil: Long, refreshToken: RefreshToken)
 
   def claimCallback(code: Option[String], state: Option[String], error:Option[String], errorDescription:Option[String], errorCode:Option[String]) = userAction.async { implicit request =>
     val tokenDetails: Future[Either[Result, TokenDetails]] = code match {

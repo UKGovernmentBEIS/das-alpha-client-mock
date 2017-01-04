@@ -3,6 +3,7 @@ package services
 import javax.inject.Inject
 
 import com.google.inject.ImplementedBy
+import data.AccessToken
 import models.{EmployerDetail, Emprefs, LevyDeclarations}
 import play.api.Logger
 import play.api.data.validation.ValidationError
@@ -15,21 +16,21 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[LevyApiImpl])
 trait LevyApiService {
-  def root(authToken: String)(implicit rh: RequestHeader): Future[Either[String, Emprefs]]
+  def root(authToken: AccessToken)(implicit rh: RequestHeader): Future[Either[String, Emprefs]]
 
-  def declarations(empref: String, authToken: String)(implicit rh: RequestHeader): Future[Either[String, LevyDeclarations]]
+  def declarations(empref: String, authToken: AccessToken)(implicit rh: RequestHeader): Future[Either[String, LevyDeclarations]]
 
-  def employerDetails(empref: String, authToken: String)(implicit rh: RequestHeader): Future[Either[String, EmployerDetail]]
+  def employerDetails(empref: String, authToken: AccessToken)(implicit rh: RequestHeader): Future[Either[String, EmployerDetail]]
 }
 
 class LevyApiImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) extends LevyApiService {
 
   import ServiceConfig.config
 
-  override def root(authToken: String)(implicit rh: RequestHeader): Future[Either[String, Emprefs]] = {
+  override def root(authToken: AccessToken)(implicit rh: RequestHeader): Future[Either[String, Emprefs]] = {
     val uri = config.api.baseURI + "/"
 
-    ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken", "Accept" -> "application/vnd.hmrc.1.0+json").get.map { response =>
+    ws.url(uri).withHeaders("Authorization" -> s"Bearer ${authToken.token}", "Accept" -> "application/vnd.hmrc.1.0+json").get.map { response =>
       response.status match {
         case 200 =>
           response.json.validate[Emprefs].fold(
@@ -49,10 +50,10 @@ class LevyApiImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) extends
     }
   }
 
-  def declarations(empref: String, authToken: String)(implicit rh: RequestHeader): Future[Either[String, LevyDeclarations]] = {
+  def declarations(empref: String, authToken: AccessToken)(implicit rh: RequestHeader): Future[Either[String, LevyDeclarations]] = {
     val uri = config.api.baseURI + s"/${helper.urlEncode(empref)}/declarations"
 
-    ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken", "Accept" -> "application/vnd.hmrc.1.0+json").get.map { response =>
+    ws.url(uri).withHeaders("Authorization" -> s"Bearer ${authToken.token}", "Accept" -> "application/vnd.hmrc.1.0+json").get.map { response =>
       response.status match {
         case 200 =>
           response.json.validate[LevyDeclarations].fold(
@@ -86,10 +87,10 @@ class LevyApiImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) extends
     implicit val writeDesignatoryDetailsFormat = Json.writes[DesignatoryDetails]
   }
 
-  def employerDetails(empref: String, authToken: String)(implicit rh: RequestHeader): Future[Either[String, EmployerDetail]] = {
+  def employerDetails(empref: String, authToken: AccessToken)(implicit rh: RequestHeader): Future[Either[String, EmployerDetail]] = {
     val uri = config.api.baseURI + s"/epaye/${helper.urlEncode(empref)}"
 
-    ws.url(uri).withHeaders("Authorization" -> s"Bearer $authToken", "Accept" -> "application/vnd.hmrc.1.0+json").get.map { response =>
+    ws.url(uri).withHeaders("Authorization" -> s"Bearer ${authToken.token}", "Accept" -> "application/vnd.hmrc.1.0+json").get.map { response =>
       response.status match {
         case 200 =>
           response.json.validate[DesignatoryDetails].fold(

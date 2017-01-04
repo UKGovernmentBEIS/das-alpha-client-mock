@@ -10,6 +10,7 @@ git.useGitDescribe := true
 
 routesImport ++= Seq(
   "uk.gov.hmrc.domain._",
+  "data._",
   "models.PlayBindings._",
   "com.wellfactored.playbindings.ValueClassUrlBinders._"
 )

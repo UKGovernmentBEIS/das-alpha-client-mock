@@ -2,7 +2,7 @@ package db
 
 import javax.inject.{Inject, Singleton}
 
-import data.{SchemeClaimOps, SchemeClaimRow, UserId}
+import data._
 import play.api.db.slick.DatabaseConfigProvider
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -12,6 +12,9 @@ trait SchemeClaimModule extends SlickModule {
 
   import driver.api._
 
+  implicit val accessTokenMapper: BaseColumnType[AccessToken] = MappedColumnType.base[AccessToken, String](_.token, AccessToken)
+  implicit val refreshTokenMapper: BaseColumnType[RefreshToken] = MappedColumnType.base[RefreshToken, String](_.token, RefreshToken)
+
   val schemeClaims = TableQuery[SchemeClaimTable]
 
   class SchemeClaimTable(tag: Tag) extends Table[SchemeClaimRow](tag, "scheme_claim") {
@@ -20,11 +23,11 @@ trait SchemeClaimModule extends SlickModule {
 
     def dasUserId = column[UserId]("das_user_id")
 
-    def accessToken = column[String]("access_token")
+    def accessToken = column[AccessToken]("access_token")
 
     def validUntil = column[Long]("valid_until")
 
-    def refreshToken = column[String]("refresh_token")
+    def refreshToken = column[RefreshToken]("refresh_token")
 
     def * = (empref, dasUserId, accessToken, validUntil, refreshToken) <> (SchemeClaimRow.tupled, SchemeClaimRow.unapply)
   }
@@ -57,7 +60,7 @@ class SchemeClaimDAO @Inject()(protected val dbConfigProvider: DatabaseConfigPro
 
   def insert(cat: SchemeClaimRow): Future[Unit] = db.run(schemeClaims += cat).map { _ => () }
 
-  override def expireToken(token: String): Future[Int] = db.run {
+  override def expireToken(token: AccessToken): Future[Int] = db.run {
     val q = for {
       c <- schemeClaims if c.accessToken === token
     } yield c.validUntil

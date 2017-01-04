@@ -2,7 +2,7 @@ package data
 
 import scala.concurrent.Future
 
-case class StashedTokenDetails(empref: String, accessToken: String, validUntil: Long, refreshToken: String, userId: UserId, ref: Int = 0)
+case class StashedTokenDetails(empref: String, accessToken: AccessToken, validUntil: Long, refreshToken: RefreshToken, userId: UserId, ref: Int = 0)
 
 trait TokenStashOps {
   /**

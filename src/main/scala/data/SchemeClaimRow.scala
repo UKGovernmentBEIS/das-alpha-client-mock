@@ -5,9 +5,13 @@ import org.joda.time.format.DateTimeFormat
 
 import scala.concurrent.Future
 
+case class RefreshToken(token: String) extends AnyVal
 
-case class SchemeClaimRow(empref: String, userId: UserId, accessToken: String, validUntil: Long, refreshToken: String) {
+case class AccessToken(token: String) extends AnyVal
+
+case class SchemeClaimRow(empref: String, userId: UserId, accessToken: AccessToken, validUntil: Long, refreshToken: RefreshToken) {
   def isAuthTokenExpired: Boolean = new DateTime(validUntil).isBeforeNow
+
   val validUntilString: String = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss ZZ").print(validUntil)
 }
 
@@ -28,6 +32,6 @@ trait SchemeClaimOps {
 
   def insert(cat: SchemeClaimRow): Future[Unit]
 
-  def expireToken(token: String): Future[Int]
+  def expireToken(token: AccessToken): Future[Int]
 }
 

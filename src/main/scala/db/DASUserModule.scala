@@ -11,7 +11,7 @@ trait DASUserModule extends SlickModule {
 
   import driver.api._
 
-  implicit def UserIdMapper: BaseColumnType[UserId] = MappedColumnType.base[UserId, Long](_.id, UserId)
+  implicit val UserIdMapper: BaseColumnType[UserId] = MappedColumnType.base[UserId, Long](_.id, UserId)
 
   val dasUsers = TableQuery[DASUserTable]
 
