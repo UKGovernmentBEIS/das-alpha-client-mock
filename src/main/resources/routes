@@ -3,22 +3,23 @@
 # ~~~~
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file              controllers.Assets.at(path="/public", file)
+GET         /assets/*file               controllers.Assets.at(path="/public", file)
 
 # Routes for the API
-GET         /                          controllers.ClientController.index
-GET         /sign-out                  controllers.ClientSignInController.signOut
-GET         /sign-in                   controllers.ClientSignInController.showSignIn
-POST        /sign-in                   controllers.ClientSignInController.handleSignIn
+GET         /                           controllers.ClientController.index
+GET         /sign-out                   controllers.ClientSignInController.signOut
+GET         /sign-in                    controllers.ClientSignInController.showSignIn
+POST        /sign-in                    controllers.ClientSignInController.handleSignIn
 
-GET         /levy-declarations         controllers.LevyController.showEmpref(empref:String)
+GET         /levy-declarations          controllers.LevyController.showEmpref(empref:String)
 
-GET         /show-schemes              controllers.ClientController.showSchemes
-GET         /select-schemes            controllers.ClientController.selectSchemes(ref:Int)
-GET         /claim-scheme              controllers.ClientController.claimScheme
+GET         /show-schemes               controllers.ClientController.showSchemes
+GET         /select-schemes             controllers.ClientController.selectSchemes(ref:Int)
+GET         /claim-scheme               controllers.ClientController.claimScheme
+GET         /link-scheme/:empref        controllers.ClientController.linkScheme(empref:String, ref:Int)
 
-GET         /remove-scheme             controllers.ClientController.removeScheme(empref:String)
-GET         /claim-callback            controllers.OAuth2Controller.claimCallback(code:Option[String], state:Option[String], error:Option[String], error_description: Option[String], error_code:Option[String])
+GET         /remove-scheme              controllers.ClientController.removeScheme(empref:String)
+GET         /claim-callback             controllers.OAuth2Controller.claimCallback(code:Option[String], state:Option[String], error:Option[String], error_description: Option[String], error_code:Option[String])
 
-GET         /admin                     controllers.AdminController.index()
-GET         /admin/expire-token        controllers.AdminController.expireToken(token:AccessToken)
+GET         /admin                      controllers.AdminController.index()
+GET         /admin/expire-token         controllers.AdminController.expireToken(token:AccessToken)

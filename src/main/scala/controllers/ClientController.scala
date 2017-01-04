@@ -3,6 +3,8 @@ package controllers
 import javax.inject.Inject
 
 import actions.ClientUserAction
+import cats.data.OptionT
+import cats.instances.future._
 import data._
 import models.EmployerDetail
 import play.api.data.Form
@@ -48,6 +50,28 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
     statusF.map(statuses => Ok(views.html.selectSchemes(request.user, statuses, ref)))
   }
 
+  def linkScheme(empref: String, ref: Int) = userAction.async { implicit request =>
+    def buildClaimRow(token: StashedTokenDetails, status: SchemeStatus) = status match {
+      case Unclaimed(detail) if detail.empref == empref => Some(SchemeClaimRow(empref, request.user.id, token.accessToken, token.validUntil, token.refreshToken))
+      case _ => None
+    }
+
+    val f = for {
+      token <- OptionT(stash.peek(ref).map(_.find(_.userId == request.user.id)))
+      employerDetails <- OptionT.liftF(findEmployerDetails(token.empref, token.accessToken))
+      status <- OptionT.liftF(checkStatus(request.user.id, employerDetails))
+      claimRow <- OptionT.fromOption(buildClaimRow(token, status))
+      _ <- OptionT.liftF(claims.insert(claimRow))
+      _ <- OptionT.liftF(stash.drop(ref))
+    } yield claimRow
+
+
+    f.value.map {
+      case Some(_) => Redirect(controllers.routes.ClientController.showSchemes())
+      case None => NotFound
+    }
+  }
+
   def findEmployerDetails(empref: String, accessToken: AccessToken)(implicit rh: RequestHeader): Future[EmployerDetail] =
     levy.employerDetails(empref, accessToken) map {
       case Left(s) => throw new Error(s)
@@ -55,13 +79,13 @@ class ClientController @Inject()(oauth2Controller: OAuth2Controller, claims: Sch
     }
 
   def checkStatuses(userId: UserId, details: Seq[EmployerDetail]): Future[Seq[SchemeStatus]] = Future.sequence {
-    details.map { detail =>
-      claims.forEmpref(detail.empref) map {
-        case None => Unclaimed(detail)
-        case Some(claim) if claim.userId == userId => UserClaimed(detail)
-        case Some(claim) => OtherClaimed(detail)
-      }
-    }
+    details.map(checkStatus(userId, _))
+  }
+
+  def checkStatus(userId: UserId, detail: EmployerDetail): Future[SchemeStatus] = claims.forEmpref(detail.empref) map {
+    case None => Unclaimed(detail)
+    case Some(claim) if claim.userId == userId => UserClaimed(detail)
+    case Some(claim) => OtherClaimed(detail)
   }
 
   def removeScheme(empref: String) = userAction.async { implicit request =>
