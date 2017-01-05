@@ -1,7 +1,8 @@
 package models
 
-import org.joda.time.LocalDate
-import play.api.libs.json.Json
+import org.joda.time.format.DateTimeFormat
+import org.joda.time.{LocalDate, LocalDateTime}
+import play.api.libs.json._
 import uk.gov.hmrc.domain.EmpRef
 
 case class PayrollMonth(year: Int, month: Int)
@@ -16,9 +17,34 @@ object EnglishFraction {
   implicit val formats = Json.format[EnglishFraction]
 }
 
-case class LevyDeclaration(payrollMonth: PayrollMonth, amount: BigDecimal, submissionType: String, submissionDate: String)
+case class PayrollPeriod(year: String, month: Int)
+
+object PayrollPeriod {
+  implicit val formats = Json.format[PayrollPeriod]
+}
+
+case class LevyDeclaration(id: Long,
+                           submissionTime: LocalDateTime,
+                           dateCeased: Option[LocalDate] = None,
+                           inactiveFrom: Option[LocalDate] = None,
+                           inactiveTo: Option[LocalDate] = None,
+                           payrollPeriod: Option[PayrollPeriod] = None,
+                           levyDueYTD: Option[BigDecimal] = None,
+                           levyAllowanceForFullYear: Option[BigDecimal] = None,
+                           noPaymentForPeriod: Option[Boolean] = None)
+
 
 object LevyDeclaration {
+  implicit val ldtFormats = new Format[LocalDateTime] {
+    val fmt = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+
+    override def reads(json: JsValue): JsResult[LocalDateTime] = implicitly[Reads[JsString]].reads(json).map { js =>
+      fmt.parseDateTime(js.value).toLocalDateTime
+    }
+
+    override def writes(o: LocalDateTime): JsValue = JsString(fmt.print(o))
+  }
+
   implicit val formats = Json.format[LevyDeclaration]
 }
 

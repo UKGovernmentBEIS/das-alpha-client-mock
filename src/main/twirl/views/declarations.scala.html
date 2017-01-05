@@ -1,54 +1,44 @@
 @(declarations: LevyDeclarations)
 
-    @proposition = {
-        <div class="header-proposition">
-            <div class="content">
-                <nav id="proposition-menu" class="header__menu" role="navigation">
-                    <span class="header__menu__proposition-name">Digital Apprenticeship Service</span>
+@proposition = {
+    <div class="header-proposition">
+        <div class="content">
+            <nav id="proposition-menu" class="header__menu" role="navigation">
+                <span class="header__menu__proposition-name">Digital Apprenticeship Service</span>
 
-                    <ul id="proposition-links" class="header__menu__proposition-links">
-                        <li><a id="logOutNavHref" href="@controllers.routes.ClientSignInController.signOut()" data-journey-click="primary-navigation:Click:Sign out">
-                            Sign out</a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
+                <ul id="proposition-links" class="header__menu__proposition-links">
+                    <li><a id="logOutNavHref" href="@controllers.routes.ClientSignInController.signOut()" data-journey-click="primary-navigation:Click:Sign out">
+                        Sign out</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
-    }
+    </div>
+}
 
-    @main(s"Levy Declarations for ${declarations.empref}", insideHeader = proposition) {
+@main(s"Levy Declarations for ${declarations.empref}", insideHeader = proposition) {
+    <div>
+        <h2>Levy Declarations for @declarations.empref</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Payroll Period</th>
+                    <th>Declared Levy YTD</th>
+                    <th>Submission Time</th>
+                </tr>
+            </thead>
+            <tbody>
+            @declarations.declarations.map { decl =>
+                <tr>
+                    <td align="right">@decl.payrollPeriod.map(p => s"${p.year} ${p.month}")</td>
+                    <td align="right">&pound;@decl.levyDueYTD</td>
+                    <td align="right">@decl.submissionTime</td>
+                </tr>
+            }
+            </tbody>
+        </table>
         <div>
-            <h2>Levy Declarations for @declarations.empref</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Month</th>
-                        <th>Declared Levy</th>
-                        <th>Submission Type</th>
-                        <th>Submission Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @declarations.declarations.map { decl =>
-                    <tr>
-                        <td align="right">@decl.payrollMonth.month/@decl.payrollMonth.year</td>
-                        <td align="right">&pound;@decl.amount</td>
-                        <td align="right">@decl.submissionType</td>
-                        <td align="right">@decl.submissionDate</td>
-                    </tr>
-                }
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th>Total</th>
-                        <th align="right">&pound;@declarations.declarations.map(_.amount).sum</th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                </tfoot>
-            </table>
-            <div>
-                <a href="@controllers.routes.ClientController.index()">Back</a>
-            </div>
+            <a href="@controllers.routes.ClientController.index ()">Back</a>
         </div>
-    }
+    </div>
+}

@@ -20,6 +20,10 @@ PlayKeys.devSettings := Seq("play.server.http.port" -> "9000")
 
 resolvers += Resolver.bintrayRepo("hmrc", "releases")
 
+// need this because we've disabled the PlayLayoutPlugin. without it twirl templates won't get
+// re-compiled on change in dev mode
+PlayKeys.playMonitoredFiles ++= (sourceDirectories in(Compile, TwirlKeys.compileTemplates)).value
+
 libraryDependencies ++= Seq(
   ws,
   "joda-time" % "joda-time" % "2.7",
