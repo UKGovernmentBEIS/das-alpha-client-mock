@@ -8,6 +8,7 @@ import data.{AccessToken, RefreshToken}
 import play.api.Logger
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.libs.ws.{WSClient, WSResponse}
+import tools.TOTP
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -20,6 +21,8 @@ trait OAuth2Service {
   def convertCode(code: String): Future[AccessTokenResponse]
 
   def refreshAccessToken(refreshToken: RefreshToken): Future[Option[RefreshTokenResponse]]
+
+  def refreshPrivilegedAccessToken: Future[Option[RefreshTokenResponse]]
 }
 
 class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) extends OAuth2Service with ValueClassFormats {
@@ -70,6 +73,29 @@ class OAuth2ServiceImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) e
     val params = Seq(
       "grant_type" -> "refresh_token",
       "refresh_token" -> refreshToken.token
+    )
+
+    call(params).map { response =>
+      response.status match {
+        case 200 => response.json.validate[RefreshTokenResponse].asOpt
+
+        case 400 => None
+
+        case s =>
+          Logger.warn("Request to refresh access token failed")
+          Logger.warn(s"Response is $s with body: '${response.body}'")
+          throw new Exception(s"Request to refresh access token failed with ${response.body}")
+      }
+    }
+  }
+
+  def refreshPrivilegedAccessToken: Future[Option[RefreshTokenResponse]] = {
+    Logger.debug("refresh access token")
+    val params = Seq(
+      "grant_type" -> "client_credentials",
+      "client_id" -> ServiceConfig.config.privilegedClient.id,
+      "scopes" -> "read:apprenticeship-levy",
+      "client_secret" -> TOTP.generateCode(ServiceConfig.config.privilegedClient.secret).value
     )
 
     call(params).map { response =>

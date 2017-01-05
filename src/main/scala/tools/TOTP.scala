@@ -77,6 +77,11 @@ trait TOTP {
   }
 }
 
-object TOTP extends TOTP
+object TOTP extends TOTP {
+  def generateCode(secret: String): TOTPCode = generateCodeAtTime(secret, System.currentTimeMillis())
+
+
+}
+
 
 

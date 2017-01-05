@@ -13,7 +13,7 @@ class LevyController @Inject()(levyApi: LevyApiService, tokenHelper: AccessToken
   def showEmpref(empref: String) = Action.async { implicit request =>
     claims.forEmpref(empref).flatMap {
       case Some(row) =>
-        tokenHelper.freshenAccessToken(row).flatMap {
+        tokenHelper.freshenPrivilegedAccessToken.flatMap {
           case Some(authToken) =>
             levyApi.declarations(empref, authToken).map {
               case Right(decls) => Ok(views.html.declarations(decls))
