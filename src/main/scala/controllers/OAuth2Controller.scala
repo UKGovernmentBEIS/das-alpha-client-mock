@@ -3,11 +3,10 @@ package controllers
 import javax.inject.Inject
 
 import actions.ClientUserAction
-import cats.data.Xor.{Left, Right}
-import cats.data.{Xor, XorT}
+import cats.data.EitherT
 import cats.instances.future._
-import cats.syntax.xor._
-import data.{SchemeClaimOps, StashedTokenDetails, TokenStashOps}
+import cats.syntax.either._
+import data._
 import play.api.mvc._
 import services.ServiceConfig.config
 import services.{LevyApiService, OAuth2Service}
@@ -26,19 +25,19 @@ class OAuth2Controller @Inject()(oAuth2Service: OAuth2Service, accessTokens: Tok
     Redirect(config.api.authorizeSchemeUri, params)
   }
 
-  case class TokenDetails(accessToken: String, validUntil: Long, refreshToken: String)
+  case class TokenDetails(accessToken: AccessToken, validUntil: Long, refreshToken: RefreshToken)
 
   def claimCallback(code: Option[String], state: Option[String], error:Option[String], errorDescription:Option[String], errorCode:Option[String]) = userAction.async { implicit request =>
-    val tokenDetails: Future[Xor[Result, TokenDetails]] = code match {
+    val tokenDetails: Future[Either[Result, TokenDetails]] = code match {
       case None => Future.successful(Left(BadRequest("No oAuth code")))
-      case Some(c) => convertCodeToToken(c).map(_.right)
+      case Some(c) => convertCodeToToken(c).map(Right(_))
     }
 
     val refx = for {
-      td <- XorT(tokenDetails)
-      emprefs <- XorT(api.root(td.accessToken).map(_.leftMap(BadRequest(_))))
+      td <- EitherT(tokenDetails)
+      emprefs <- EitherT(api.root(td.accessToken).map(_.leftMap(BadRequest(_))))
       ds = emprefs.emprefs.map(StashedTokenDetails(_, td.accessToken, td.validUntil, td.refreshToken, request.user.id))
-      ref <- XorT[Future, Result, Int](accessTokens.stash(ds).map(_.right))
+      ref <- EitherT[Future, Result, Int](accessTokens.stash(ds).map(Right(_)))
     } yield ref
 
     refx.value.map {

@@ -1,7 +1,7 @@
 package db
 
 import com.google.inject.Inject
-import data.{StashedTokenDetails, TokenStashOps}
+import data._
 import play.api.db.slick.DatabaseConfigProvider
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -11,20 +11,24 @@ trait TokenStashModule extends SlickModule {
 
   import driver.api._
 
+  implicit val userIdMapper: BaseColumnType[UserId] = MappedColumnType.base[UserId, Long](_.id, UserId)
+  implicit val accessTokenMapper: BaseColumnType[AccessToken] = MappedColumnType.base[AccessToken, String](_.token, AccessToken)
+  implicit val refreshTokenMapper: BaseColumnType[RefreshToken] = MappedColumnType.base[RefreshToken, String](_.token, RefreshToken)
+
   val tokenStash = TableQuery[TokenStashTable]
 
   class TokenStashTable(tag: Tag) extends Table[StashedTokenDetails](tag, "token_stash") {
     def ref = column[Int]("ref")
 
-    def userId = column[Long]("user_id")
+    def userId = column[UserId]("user_id")
 
     def empref = column[String]("empref")
 
-    def accessToken = column[String]("access_token")
+    def accessToken = column[AccessToken]("access_token")
 
     def validUntil = column[Long]("valid_until")
 
-    def refreshToken = column[String]("refresh_token")
+    def refreshToken = column[RefreshToken]("refresh_token")
 
     def * = (empref, accessToken, validUntil, refreshToken, userId, ref) <> (StashedTokenDetails.tupled, StashedTokenDetails.unapply)
   }

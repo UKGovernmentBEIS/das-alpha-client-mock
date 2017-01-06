@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.Inject
 
-import data.SchemeClaimOps
+import data.{AccessToken, SchemeClaimOps}
 import play.api.mvc.{Action, Controller}
 
 import scala.concurrent.ExecutionContext
@@ -13,7 +13,7 @@ class AdminController @Inject()(claims: SchemeClaimOps)(implicit ec: ExecutionCo
     claims.all().map(cs => Ok(views.html.adminIndex(cs.sortBy(_.empref))))
   }
 
-  def expireToken(token: String) = Action.async { implicit request =>
+  def expireToken(token: AccessToken) = Action.async { implicit request =>
     claims.expireToken(token).map(_ => Redirect(controllers.routes.AdminController.index()))
   }
 

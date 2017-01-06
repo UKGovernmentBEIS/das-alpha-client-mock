@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.Inject
 
-import data.{SchemeClaim, SchemeClaimOps}
+import data.{AccessToken, SchemeClaimOps, SchemeClaimRow}
 import play.api.Logger
 import play.api.mvc.RequestHeader
 import services.OAuth2Service
@@ -10,7 +10,7 @@ import services.OAuth2Service
 import scala.concurrent.{ExecutionContext, Future}
 
 class AccessTokenHelper @Inject()(oAuth2Service: OAuth2Service, claims: SchemeClaimOps)(implicit ec: ExecutionContext) {
-  def freshenAccessToken(row: SchemeClaim)(implicit requestHeader: RequestHeader): Future[Option[String]] = {
+  def freshenAccessToken(row: SchemeClaimRow)(implicit requestHeader: RequestHeader): Future[Option[AccessToken]] = {
     if (row.isAuthTokenExpired) {
       Logger.info(s"access token has expired - refreshing")
       oAuth2Service.refreshAccessToken(row.refreshToken).flatMap {
@@ -25,6 +25,18 @@ class AccessTokenHelper @Inject()(oAuth2Service: OAuth2Service, claims: SchemeCl
       }
     } else {
       Future.successful(Some(row.accessToken))
+    }
+  }
+
+  def freshenPrivilegedAccessToken(implicit requestHeader: RequestHeader): Future[Option[AccessToken]] = {
+    oAuth2Service.refreshPrivilegedAccessToken.flatMap {
+      case Some(rtr) =>
+        Logger.debug(s"access token is ${rtr.access_token}")
+        Future.successful(Some(rtr.access_token))
+
+      case None =>
+        Logger.warn(s"Failed to refresh privileged access token")
+        Future.successful(None)
     }
   }
 }

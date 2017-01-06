@@ -1,0 +1,4 @@
+@(employerDetail: EmployerDetail, ref: Int)
+
+<span>@employerDetail.empref @employerDetail.name1 @employerDetail.name2</span>
+<a href="@controllers.routes.ClientController.linkScheme(employerDetail.empref, ref)">link this scheme to your account</a>

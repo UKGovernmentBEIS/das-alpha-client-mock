@@ -1,5 +1,6 @@
 @import data.DASUser
-@(user: DASUser, statuses: Seq[SchemeStatus], tokenDetailsId: Long)
+
+@(user: DASUser, statuses: Seq[SchemeStatus], tokenStashRef: Int)
 
     @proposition = {
         <div class="header-proposition">
@@ -29,9 +30,12 @@
                 @statuses.map { s =>
                   <li>
                       @{s match {
-                          case Unclaimed(employerDetail) => s"${employerDetail.empref} ${employerDetail.name1.getOrElse("")} ${employerDetail.name2.getOrElse("")} - connect this scheme to your account"
-                          case UserClaimed(employerDetail) => s"${employerDetail.empref} ${employerDetail.name1.getOrElse("")} ${employerDetail.name2.getOrElse("")} - you have already claimed this scheme"
-                          case OtherClaimed(employerDetail) => s"${employerDetail.empref} ${employerDetail.name1.getOrElse("")} ${employerDetail.name2.getOrElse("")} - someone else has already claimed this scheme"
+                          case Unclaimed(employerDetail) => linkScheme(employerDetail, tokenStashRef)
+
+                          case UserClaimed(employerDetail) =>
+                              s"${employerDetail.empref} ${employerDetail.name1.getOrElse("")} ${employerDetail.name2.getOrElse("")} - you have already claimed this scheme"
+                          case OtherClaimed(employerDetail) =>
+                              s"${employerDetail.empref} ${employerDetail.name1.getOrElse("")} ${employerDetail.name2.getOrElse("")} - someone else has already claimed this scheme"
                       }}
                   </li>
                 }

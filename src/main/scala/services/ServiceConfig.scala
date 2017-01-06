@@ -2,7 +2,7 @@ package services
 
 import scala.util.{Failure, Success}
 
-case class ServiceConfig(api: ApiConfig, client: ClientConfig)
+case class ServiceConfig(api: ApiConfig, client: ClientConfig, privilegedClient: ClientConfig)
 
 case class ClientConfig(id: String, secret: String, useSSL: Boolean)
 
