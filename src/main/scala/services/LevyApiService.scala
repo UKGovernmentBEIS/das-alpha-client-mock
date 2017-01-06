@@ -51,7 +51,7 @@ class LevyApiImpl @Inject()(ws: WSClient)(implicit ec: ExecutionContext) extends
   }
 
   def declarations(empref: String, authToken: AccessToken)(implicit rh: RequestHeader): Future[Either[String, LevyDeclarations]] = {
-    val uri = config.api.baseURI + s"/${helper.urlEncode(empref)}/declarations"
+    val uri = config.api.baseURI + s"/epaye/${helper.urlEncode(empref)}/declarations"
 
     ws.url(uri).withHeaders("Authorization" -> s"Bearer ${authToken.token}", "Accept" -> "application/vnd.hmrc.1.0+json").get.map { response =>
       response.status match {

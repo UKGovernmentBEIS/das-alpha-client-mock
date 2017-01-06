@@ -40,24 +40,22 @@ object TimeWindow {
 case class TOTPCode(value: String) extends AnyVal
 
 trait TOTP {
-  def generateCodeAtTime(secret: String, ts: Long): TOTPCode =
-    generateCode(secret, TimeWindow.forTimestamp(ts))
+  def generateCodeAtTime(base32EncodedSecret: String, ts: Long): TOTPCode =
+    generateCode(base32EncodedSecret, TimeWindow.forTimestamp(ts))
 
   /**
     * Generate codes for the time window for the timestamp as well as the
     * previous and next time windows.
     */
-  def generateCodesAround(secret: String, ts: Long): Seq[TOTPCode] =
-    TimeWindow.around(ts).map { tw =>
-      generateCode(secret, tw)
-    }
+  def generateCodesAround(base32EncodedSecret: String, ts: Long): Seq[TOTPCode] =
+    TimeWindow.around(ts).map(generateCode(base32EncodedSecret, _))
 
-  def generateCode(secret: String, timeWindow: TimeWindow): TOTPCode = {
+  def generateCode(base32EncodedSecret: String, timeWindow: TimeWindow): TOTPCode = {
     val codeLength = 8
     val crypto = HmacSHA512
     val msg: Array[Byte] = BigInt(timeWindow.value).toByteArray.reverse.padTo(8, 0.toByte).reverse
 
-    val hash = hmac_sha(crypto.toString, new Base32().decode(secret), msg)
+    val hash = hmac_sha(crypto.toString, new Base32().decode(base32EncodedSecret), msg)
     val offset: Int = hash(hash.length - 1) & 0xf
     val binary: Long = ((hash(offset) & 0x7f) << 24) |
       ((hash(offset + 1) & 0xff) << 16) |
@@ -78,9 +76,7 @@ trait TOTP {
 }
 
 object TOTP extends TOTP {
-  def generateCode(secret: String): TOTPCode = generateCodeAtTime(secret, System.currentTimeMillis())
-
-
+  def generateCode(base32EncodedSecret: String): TOTPCode = generateCodeAtTime(base32EncodedSecret, System.currentTimeMillis())
 }
 
 
